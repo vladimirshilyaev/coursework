@@ -37,3 +37,16 @@ C:/Users/Vladimir/Desktop/VisualStudio/DicomViewer_EvilDicom/DicomViewer/obj/Deb
 /Users/Vladimir/Yandex.Disk.localized/CourseWork/DicomViewer_EvilDicom/DicomViewer/obj/Debug/DicomViewer.csproj.CoreCompileInputs.cache
 /Users/Vladimir/Yandex.Disk.localized/CourseWork/DicomViewer_EvilDicom/DicomViewer/obj/Debug/DicomViewer.exe
 /Users/Vladimir/Yandex.Disk.localized/CourseWork/DicomViewer_EvilDicom/DicomViewer/obj/Debug/DicomViewer.pdb
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\bin\Debug\DicomViewer.exe.config
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\bin\Debug\DicomViewer.exe
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\bin\Debug\DicomViewer.pdb
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\bin\Debug\EvilDICOM.dll
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\bin\Debug\System.ValueTuple.dll
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\bin\Debug\System.ValueTuple.xml
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\obj\Debug\DicomViewer.csprojResolveAssemblyReference.cache
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\obj\Debug\DicomViewer.Form1.resources
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\obj\Debug\DicomViewer.Properties.Resources.resources
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\obj\Debug\DicomViewer.csproj.GenerateResource.Cache
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\obj\Debug\DicomViewer.csproj.CoreCompileInputs.cache
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\obj\Debug\DicomViewer.exe
+C:\Users\Vladimir\Desktop\GitHub\coursework\DicomViewer_EvilDicom\DicomViewer\obj\Debug\DicomViewer.pdb
