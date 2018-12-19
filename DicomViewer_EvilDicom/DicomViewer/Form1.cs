@@ -46,13 +46,15 @@ namespace DicomViewer
 
             int index = 0;
             byte[] outPixelData = new byte[rows * colums * 4];//rgba
-            ushort mask = (ushort)(ushort.MaxValue >> (bitsAllocated - bitsStored));
-            double maxval = Math.Pow(2, bitsStored);
+            //ushort mask = (ushort)(ushort.MaxValue >> (bitsAllocated - bitsStored));//>> = /(2^x)
+            double maxval = Math.Pow(2, bitsStored);//2^12 = 4096
 
             for (int i = 0; i < pixelData.Count; i += 2)
             {
-                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
-                double valgray = gray & mask;//remove not used bits
+                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));//<< = *2^8 , count the value from 12 bits (2^12 = 4056)
+                //double valgray = gray & mask;//remove not used bits
+                double valgray = gray;
+
 
                 if (pixelRepresentation == 1)// the last bit is the sign, apply a2 complement
                 {
@@ -71,8 +73,8 @@ namespace DicomViewer
                     valgray = 0;
                 else if (valgray >= level + half && valgray >= density)
                     valgray = 255;
-                /*else
-                    valgray = ((valgray - (level - 0.5)) / (window - 1) + 0.5) * 255;*/
+                else
+                    valgray = ((valgray - (level - 0.5)) / (window - 1) + 0.5) * 255;
 
                 outPixelData[index] = (byte)valgray;
                 outPixelData[index + 1] = (byte)valgray;
