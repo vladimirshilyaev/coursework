@@ -55,7 +55,6 @@ namespace DicomViewer
                 //double valgray = gray & mask;//remove not used bits
                 double valgray = gray;
 
-
                 if (pixelRepresentation == 1)// the last bit is the sign, apply a2 complement
                 {
                     if (valgray > (maxval / 2))
@@ -114,7 +113,7 @@ namespace DicomViewer
 
             for (int i = 0; i < pixelData.Count; i += 2)
             {
-                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
+                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));//<< = *2^8 , count the value from 12 bits (2^12 = 4056)
                 double valgray = gray & mask;//remove not used bits
 
                 if (pixelRepresentation == 1)// the last bit is the sign, apply a2 complement
@@ -189,7 +188,6 @@ namespace DicomViewer
 
                 MinDensityLabel.Text = Convert.ToString(trackBar2.Minimum);
                 MinDensityLabel.Visible = true;
-
                 MaxDensityLabel.Text = Convert.ToString(trackBar2.Maximum);
                 MaxDensityLabel.Visible = true;
 
@@ -281,6 +279,17 @@ namespace DicomViewer
         private void SaveButton_Click(object sender, EventArgs e)
         {
           
+        }
+
+        [DllImport("TestLib.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern double Add(double a, double b);
+
+        private void ExternalButton_Click(object sender, EventArgs e)
+        {
+            ExternalTextBox.Enabled = true;
+
+            var x = Add(25, 17);
+            ExternalTextBox.Text = x.ToString();
         }
     }
 }
