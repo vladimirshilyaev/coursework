@@ -26,95 +26,42 @@ namespace DicomViewer
         public Image SegmentedImage (string fileName, int density)
         {
             var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
-            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-            ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-            double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
-            double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
 
-            byte[] outPixelData = new byte[rows * colums * 4];
-            MemoryStream ms = new MemoryStream();
-            pictureBox1.Image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            byte[] pixelData = ms.ToArray();
-
-            for(int i = 0;i < pixelData.Length; i += 4)
-            {
-                var value = pixelData[i];
-                double valgray = (value / 255 *  window) + level;
-                if (valgray < density)
-                    value = 0;
-
-                outPixelData[i] = (byte)value;
-                outPixelData[i + 1] = (byte)value;
-                outPixelData[i + 2] = (byte)value;
-                outPixelData[i + 3] = 255;
-            }
-            Image newimage = this.ImageFromRgbaArray(outPixelData, colums, rows);
-            return newimage;
-        }
-
-        public Image LoadSegmentedImage (string fileName, int density)
-        {
-            var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
-            string photo = dcm.FindFirst(TagHelper.PhotometricInterpretation).DData.ToString();
-            ushort bitsAllocated = (ushort)dcm.FindFirst(TagHelper.BitsAllocated).DData;
-            ushort highBit = (ushort)dcm.FindFirst(TagHelper.HighBit).DData;
             ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
             double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
             double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
             ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
             ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-            ushort pixelRepresentation = (ushort)dcm.FindFirst(TagHelper.PixelRepresentation).DData;
-            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
             double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
             double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
-
-            if (!photo.Contains("MONOCHROME"))//just works for gray images
-                return null;
-
-            int index = 0;
-            byte[] outPixelData = new byte[rows * colums * 4];//rgba
-            //ushort mask = (ushort)(ushort.MaxValue >> (bitsAllocated - bitsStored));//>> = /(2^x)
-            double maxval = Math.Pow(2, bitsStored);//2^12 = 4096
+            
+            int size = pixelData.Count;
+            List<byte> segmPixelData = new List<byte>();//rgba
+            double maxval = Math.Pow(2, bitsStored);
 
             for (int i = 0; i < pixelData.Count; i += 2)
             {
-                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));//<< = *2^8 , count the value from 12 bits (2^12 = 4056)
-                //double valgray = gray & mask;//remove not used bits
+                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
                 double valgray = gray;
-
-
-                /*if (pixelRepresentation == 1)// the last bit is the sign, apply a2 complement
-                {
-                    if (valgray > (maxval / 2))
-                        valgray = (valgray - maxval);
-
-                }*/
 
                 valgray = slope * valgray + intercept;//modality lut
 
-
                 //This is  the window level algorithm
-                //double half = ((window - 1) / 2.0) - 0.5;
+                double half = window / 2.0;
 
-                double half = window / 2;
-
-                if (valgray <= level - half || valgray < density)
-                    valgray = 0;
-                else if (valgray >= level + half && valgray >= density)
-                    valgray = 255;
+                if (valgray <= density)
+                {
+                    segmPixelData.Insert(i,(byte)0);
+                    segmPixelData.Insert(i+1, (byte)0);
+                }
                 else
-                    valgray = ((valgray - level) / window * 255);
-
-                outPixelData[index] = (byte)valgray;
-                outPixelData[index + 1] = (byte)valgray;
-                outPixelData[index + 2] = (byte)valgray;
-                outPixelData[index + 3] = 255;
-
-                index += 4;
+                {
+                    segmPixelData.Insert(i, (byte)pixelData[i]);
+                    segmPixelData.Insert(i + 1, (byte)pixelData[i+1]);
+                }
             }
-
-            Image newimage = this.ImageFromRgbaArray(outPixelData, colums, rows);
-            return newimage;
+            return RgbaArray(segmPixelData, colums, rows, bitsStored, slope, intercept, window, level);
         }
 
         public Image LoadImage(string fileName)
@@ -143,25 +90,14 @@ namespace DicomViewer
         {
             int index = 0;
             byte[] outPixelData = new byte[rows * columns * 4];//rgba
-            //ushort mask = (ushort)(ushort.MaxValue >> (bitsAllocated - bitsStored));
             double maxval = Math.Pow(2, bitsStored);
 
             for (int i = 0; i < pixelData.Count; i += 2)
             {
                 ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
-                //double valgray = gray & mask;//remove not used bits
                 double valgray = gray;
 
-
-                /*if (pixelRepresentation == 1)// the last bit is the sign, apply a2 complement
-                {
-                    if (valgray > (maxval / 2))
-                        valgray = (valgray - maxval);
-
-                }*/
-
                 valgray = slope * valgray + intercept;//modality lut
-
 
                 //This is  the window level algorithm
                 double half = window / 2.0;
@@ -246,7 +182,7 @@ namespace DicomViewer
 
             if (SegmentateCheckBox.Checked == true)
             {
-                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value - 1);
+                pictureBox2.Image = SegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value - 1);
             }
         }
 
@@ -309,7 +245,7 @@ namespace DicomViewer
         {
             if (SegmentateCheckBox.Checked == true)
             {
-                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
+                pictureBox2.Image = SegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
                 
             }
             CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
