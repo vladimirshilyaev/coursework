@@ -23,6 +23,46 @@ namespace DicomViewer
 
         }
 
+        /*public void SegmentedArray(string fileName, int density)
+        {
+            var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
+            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
+
+            ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
+            double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
+            double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
+            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
+            ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
+            double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
+            double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+
+            int size = pixelData.Count;
+            List<byte> segmPixelData = new List<byte>();//rgba
+            double maxval = Math.Pow(2, bitsStored);
+
+            for (int i = 0; i < pixelData.Count; i += 2)
+            {
+                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                valgray = slope * valgray + intercept;//modality lut
+
+                //This is  the window level algorithm
+                double half = window / 2.0;
+
+                if (valgray <= density)
+                {
+                    segmPixelData.Insert(i, (byte)0);
+                    segmPixelData.Insert(i + 1, (byte)0);
+                }
+                else
+                {
+                    segmPixelData.Insert(i, (byte)pixelData[i]);
+                    segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
+                }
+            }
+        }*/
+
         public Image SegmentedImage (string fileName, int density)
         {
             var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
@@ -256,4 +296,10 @@ namespace DicomViewer
           
         }
     }
+
+    public class Node
+    {
+
+    }
 }
+
