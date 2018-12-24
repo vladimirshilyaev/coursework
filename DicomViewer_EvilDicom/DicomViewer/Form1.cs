@@ -23,7 +23,7 @@ namespace DicomViewer
 
         }
 
-        /*public void SegmentedArray(string fileName, int density)
+        public void SegmentedArray(string fileName, int density)
         {
             var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
             List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
@@ -35,6 +35,12 @@ namespace DicomViewer
             ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
             double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
             double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+
+            List<double> pixelSpacings = (List<double>)dcm.FindFirst(TagHelper.PixelSpacing).DData_;
+            double rowSpacing = pixelSpacings[0];
+            double columnSpacing = pixelSpacings[1];
+
+            double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
 
             int size = pixelData.Count;
             List<byte> segmPixelData = new List<byte>();//rgba
@@ -61,7 +67,28 @@ namespace DicomViewer
                     segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
                 }
             }
-        }*/
+
+            Element[,] elements = new Element[rows,colums];
+
+            for (int i=0;i<rows;i++)
+            {
+                for (int j = 0; j < colums * 2; j += 2)
+                {
+                    double valgray = segmPixelData[2*rows*i + j] + segmPixelData[2*rows*i + j + 1];
+                    valgray = slope * valgray + intercept;
+
+                    elements[i,j/2] = new Element();
+                    var currentElement = elements[i, j / 2];
+
+                    currentElement.rowNumber = i;
+                    currentElement.columnNumber = j / 2;
+                    currentElement.rowSpacing = rowSpacing;
+                    currentElement.columnSpacing = columnSpacing;
+                    
+                    currentElement.value=valgray;
+                }
+            }     
+        }
 
         public Image SegmentedImage (string fileName, int density)
         {
@@ -297,9 +324,27 @@ namespace DicomViewer
         }
     }
 
-    public class Node
+    public class Element
     {
+        public int rowNumber;
+        public int columnNumber;
 
+        public double rowSpacing;
+        public double columnSpacing;
+        public double sliceThickness;
+
+        public struct coords
+        {
+            public float x;
+            public float y;
+            public float z;
+        }
+
+        public coords center;
+
+        public coords[] Nodes = new coords[8];
+
+        public double value;
     }
 }
 
