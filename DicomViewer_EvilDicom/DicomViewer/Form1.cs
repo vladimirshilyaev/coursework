@@ -68,7 +68,8 @@ namespace DicomViewer
                 }
             }
 
-            Element[,] elements = new Element[rows,colums];
+            Element[] elements = new Element[rows*colums];
+            int elementsId = 0;
 
             for (int i=0;i<rows;i++)
             {
@@ -77,17 +78,39 @@ namespace DicomViewer
                     double valgray = segmPixelData[2*rows*i + j] + segmPixelData[2*rows*i + j + 1];
                     valgray = slope * valgray + intercept;
 
-                    elements[i,j/2] = new Element();
-                    var currentElement = elements[i, j / 2];
+                    double half = window / 2.0;
+
+                    if (valgray <= level - half)
+                        valgray = 0;
+                    else if (valgray >= level + half)
+                        valgray = maxval;
+
+                    elements[rows*i+j/2] = new Element();
+                    var currentElement = elements[rows*i + j / 2];
+
+                    currentElement.FEid = elementsId;
+                    elementsId++;
 
                     currentElement.rowNumber = i;
                     currentElement.columnNumber = j / 2;
                     currentElement.rowSpacing = rowSpacing;
                     currentElement.columnSpacing = columnSpacing;
+                    currentElement.sliceThickness = sliceThickness;
+
+                    elementsId = currentElement.SetNodes();
                     
                     currentElement.value=valgray;
                 }
-            }     
+            }
+            StreamWriter sw = new StreamWriter("test.txt");
+            for (int i=0;i<elements.Count();i++)
+            {
+                for (int j=0;j<elements[i].nodes.Count();j++)
+                {
+                    sw.WriteLine(elements[i].nodes[j].id+1);
+                }
+            }
+            sw.Close();
         }
 
         public Image SegmentedImage (string fileName, int density)
@@ -303,6 +326,7 @@ namespace DicomViewer
 
                 CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
                 CurrentDensityTextBox.Enabled = true;
+                SegmentedArray(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
             }
             else
                 pictureBox2.Image = null;
@@ -326,6 +350,8 @@ namespace DicomViewer
 
     public class Element
     {
+        public int FEid;
+
         public int rowNumber;
         public int columnNumber;
 
@@ -335,14 +361,91 @@ namespace DicomViewer
 
         public struct coords
         {
-            public float x;
-            public float y;
-            public float z;
+            public double x;
+            public double y;
+            public double z;
+
+            public coords (int x, int y, int z)
+            {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
         }
 
-        public coords center;
+        public coords center = new coords();
+        //public coords[] Nodes = new coords[8];
 
-        public coords[] Nodes = new coords[8];
+        public struct node
+        {
+            public int id;
+            public int ElementId;
+            public coords coordinates;
+        }
+
+        public node[] nodes = new node[8];
+
+        public int SetNodes()
+        {
+            center.x = columnSpacing / 2 + columnNumber*columnSpacing;
+            center.y = -rowSpacing / 2 - rowNumber * rowSpacing;
+            center.z = sliceThickness / 2;
+            
+            for (int i=0;i<nodes.Count();i++)
+            {
+                nodes[i].ElementId = FEid; 
+            }
+
+            nodes[0].coordinates.x = center.x - columnSpacing / 2;
+            nodes[0].coordinates.y = center.y - rowSpacing / 2;
+            nodes[0].coordinates.z = 0;
+            nodes[0].id = FEid;
+            FEid++;
+
+            nodes[1].coordinates.x = center.x + columnSpacing / 2;
+            nodes[1].coordinates.y = center.y - rowSpacing / 2;
+            nodes[1].coordinates.z = 0;
+            nodes[1].id = FEid;
+            FEid++;
+
+            nodes[2].coordinates.x = center.x + columnSpacing / 2;
+            nodes[2].coordinates.y = center.y + rowSpacing / 2;
+            nodes[2].coordinates.z = 0;
+            nodes[2].id = FEid;
+            FEid++;
+
+            nodes[3].coordinates.x = center.x - columnSpacing / 2;
+            nodes[3].coordinates.y = center.y + rowSpacing / 2;
+            nodes[3].coordinates.z = 0;
+            nodes[3].id = FEid;
+            FEid++;
+
+            nodes[4].coordinates.x = center.x - columnSpacing / 2;
+            nodes[4].coordinates.y = center.y - rowSpacing / 2;
+            nodes[4].coordinates.z = sliceThickness;
+            nodes[4].id = FEid;
+            FEid++;
+
+            nodes[5].coordinates.x = center.x + columnSpacing / 2;
+            nodes[5].coordinates.y = center.y - rowSpacing / 2;
+            nodes[5].coordinates.z = sliceThickness;
+            nodes[5].id = FEid;
+            FEid++;
+
+            nodes[6].coordinates.x = center.x + columnSpacing / 2;
+            nodes[6].coordinates.y = center.y + rowSpacing / 2;
+            nodes[6].coordinates.z = sliceThickness;
+            nodes[6].id = FEid;
+            FEid++;
+
+            nodes[7].coordinates.x = center.x - columnSpacing / 2;
+            nodes[7].coordinates.y = center.y + rowSpacing / 2;
+            nodes[7].coordinates.z = sliceThickness;
+            nodes[7].id = FEid;
+            FEid++;
+
+            return FEid;
+        }
 
         public double value;
     }
