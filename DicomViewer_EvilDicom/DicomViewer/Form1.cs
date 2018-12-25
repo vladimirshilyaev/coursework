@@ -43,9 +43,10 @@ namespace DicomViewer
             double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
 
             int size = pixelData.Count;
-            List<byte> segmPixelData = new List<byte>();//rgba
+            List<double> segmPixelData = new List<double>();//rgba
             double maxval = Math.Pow(2, bitsStored);
 
+            int index = 0;
             for (int i = 0; i < pixelData.Count; i += 2)
             {
                 ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
@@ -58,24 +59,28 @@ namespace DicomViewer
 
                 if (valgray <= density)
                 {
-                    segmPixelData.Insert(i, (byte)0);
-                    segmPixelData.Insert(i + 1, (byte)0);
+                    //segmPixelData.Insert(i, (byte)0);
+                    //segmPixelData.Insert(i + 1, (byte)0);
+                    segmPixelData.Insert(index, 0.0);
                 }
                 else
                 {
-                    segmPixelData.Insert(i, (byte)pixelData[i]);
-                    segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
+                    //segmPixelData.Insert(i, (byte)pixelData[i]);
+                    //segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
+                    segmPixelData.Insert(index, valgray);
                 }
+                index++;
             }
 
             Element[] elements = new Element[rows*colums];
             int elementsId = 0;
+            //int nodesID = 0;
 
             for (int i=0;i<rows;i++)
             {
-                for (int j = 0; j < colums * 2; j += 2)
+                for (int j = 0; j < colums ; j ++)
                 {
-                    double valgray = segmPixelData[2*rows*i + j] + segmPixelData[2*rows*i + j + 1];
+                    double valgray = segmPixelData[rows*i + j];
                     valgray = slope * valgray + intercept;
 
                     double half = window / 2.0;
@@ -85,30 +90,67 @@ namespace DicomViewer
                     else if (valgray >= level + half)
                         valgray = maxval;
 
-                    elements[rows*i+j/2] = new Element();
-                    var currentElement = elements[rows*i + j / 2];
+                    elements[rows * i + j] = new Element();
+                    var currentElement = elements[rows * i + j];
 
-                    currentElement.FEid = elementsId;
-                    elementsId++;
+                    currentElement.value = valgray;
 
                     currentElement.rowNumber = i;
-                    currentElement.columnNumber = j / 2;
+                    currentElement.columnNumber = j;
                     currentElement.rowSpacing = rowSpacing;
                     currentElement.columnSpacing = columnSpacing;
                     currentElement.sliceThickness = sliceThickness;
-
-                    elementsId = currentElement.SetNodes();
-                    
-                    currentElement.value=valgray;
+                    if (valgray != 0.0)
+                    {
+                        currentElement.FEid = elementsId;
+                        elementsId++;
+                        currentElement.SetNodes();
+                    }
                 }
             }
-            StreamWriter sw = new StreamWriter("test.txt");
+
+            StreamWriter sw = new StreamWriter("test_c.txt");
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+            sw.WriteLine("/PREP7");
+
+            int k = 0;
             for (int i=0;i<elements.Count();i++)
             {
-                for (int j=0;j<elements[i].nodes.Count();j++)
+                
+               if (elements[i].value != 0.0)
                 {
-                    sw.WriteLine(elements[i].nodes[j].id+1);
+                    k++;
+                    for (int j = 0; j < elements[i].nodes.Count(); j++)
+                    {
+                        if(k<4000)
+                        sw.WriteLine($"N,{ elements[i].nodes[j].id + 1},{elements[i].nodes[j].coordinates.x},{elements[i].nodes[j].coordinates.y},{elements[i].nodes[j].coordinates.z},,,,");
+                    }
                 }
+               
+            }
+            sw.WriteLine(" ");
+            sw.WriteLine("ET,1,SOLID185 ");
+            sw.WriteLine(" ");
+            k = 0;
+            for (int i = 0; i < elements.Count(); i++)
+            {
+                
+               if (elements[i].value != 0.0)
+                {
+                    k++;
+                    if (k < 4000)
+                    {
+                        sw.WriteLine($"FLST,3,8,1");
+                        for (int j = 0; j < elements[i].nodes.Count(); j++)
+                        {
+
+                            sw.WriteLine($"FITEM,3,{elements[i].nodes[j].id + 1}");
+                        }
+                        sw.WriteLine($"EN,{elements[i].FEid+1},P51X");
+                        sw.WriteLine(" ");
+                    }
+                }
+               
             }
             sw.Close();
         }
@@ -385,7 +427,7 @@ namespace DicomViewer
 
         public node[] nodes = new node[8];
 
-        public int SetNodes()
+        public void SetNodes()
         {
             center.x = columnSpacing / 2 + columnNumber*columnSpacing;
             center.y = -rowSpacing / 2 - rowNumber * rowSpacing;
@@ -393,58 +435,42 @@ namespace DicomViewer
             
             for (int i=0;i<nodes.Count();i++)
             {
-                nodes[i].ElementId = FEid; 
+                nodes[i].ElementId = FEid;
+                nodes[i].id = FEid * 8+i;
             }
 
             nodes[0].coordinates.x = center.x - columnSpacing / 2;
             nodes[0].coordinates.y = center.y - rowSpacing / 2;
             nodes[0].coordinates.z = 0;
-            nodes[0].id = FEid;
-            FEid++;
-
+            
             nodes[1].coordinates.x = center.x + columnSpacing / 2;
             nodes[1].coordinates.y = center.y - rowSpacing / 2;
             nodes[1].coordinates.z = 0;
-            nodes[1].id = FEid;
-            FEid++;
-
+            
             nodes[2].coordinates.x = center.x + columnSpacing / 2;
             nodes[2].coordinates.y = center.y + rowSpacing / 2;
             nodes[2].coordinates.z = 0;
-            nodes[2].id = FEid;
-            FEid++;
-
+            
             nodes[3].coordinates.x = center.x - columnSpacing / 2;
             nodes[3].coordinates.y = center.y + rowSpacing / 2;
             nodes[3].coordinates.z = 0;
-            nodes[3].id = FEid;
-            FEid++;
-
+           
             nodes[4].coordinates.x = center.x - columnSpacing / 2;
             nodes[4].coordinates.y = center.y - rowSpacing / 2;
             nodes[4].coordinates.z = sliceThickness;
-            nodes[4].id = FEid;
-            FEid++;
-
+            
             nodes[5].coordinates.x = center.x + columnSpacing / 2;
             nodes[5].coordinates.y = center.y - rowSpacing / 2;
             nodes[5].coordinates.z = sliceThickness;
-            nodes[5].id = FEid;
-            FEid++;
-
+           
             nodes[6].coordinates.x = center.x + columnSpacing / 2;
             nodes[6].coordinates.y = center.y + rowSpacing / 2;
             nodes[6].coordinates.z = sliceThickness;
-            nodes[6].id = FEid;
-            FEid++;
-
+          
             nodes[7].coordinates.x = center.x - columnSpacing / 2;
             nodes[7].coordinates.y = center.y + rowSpacing / 2;
             nodes[7].coordinates.z = sliceThickness;
-            nodes[7].id = FEid;
-            FEid++;
-
-            return FEid;
+           
         }
 
         public double value;
