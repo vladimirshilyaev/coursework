@@ -42,6 +42,8 @@ namespace DicomViewer
 
             double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
 
+            sliceThickness = columnSpacing;
+
             int size = pixelData.Count;
             List<double> segmPixelData = new List<double>();//rgba
             double maxval = Math.Pow(2, bitsStored);
@@ -239,7 +241,7 @@ namespace DicomViewer
                 else if (valgray >= level + half)
                     valgray = 255;
                 else
-                    valgray = ((valgray - level) / window) * 255;
+                    valgray = ((valgray /*- level*/) / window) * 255;
 
                 outPixelData[index] = (byte)valgray;
                 outPixelData[index + 1] = (byte)valgray;

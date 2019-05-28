@@ -45,6 +45,7 @@
             this.MaxSliceLabel = new System.Windows.Forms.Label();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.panel3 = new System.Windows.Forms.Panel();
+            this.FEButton = new System.Windows.Forms.Button();
             this.SegmentateCheckBox = new System.Windows.Forms.CheckBox();
             this.CloseButton = new System.Windows.Forms.Button();
             this.panel4 = new System.Windows.Forms.Panel();
@@ -250,6 +251,7 @@
             // 
             // panel3
             // 
+            this.panel3.Controls.Add(this.FEButton);
             this.panel3.Controls.Add(this.SegmentateCheckBox);
             this.panel3.Controls.Add(this.CloseButton);
             this.panel3.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -259,12 +261,25 @@
             this.panel3.Size = new System.Drawing.Size(972, 56);
             this.panel3.TabIndex = 7;
             // 
+            // FEButton
+            // 
+            this.FEButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.FEButton.Enabled = false;
+            this.FEButton.Location = new System.Drawing.Point(309, 6);
+            this.FEButton.Margin = new System.Windows.Forms.Padding(6);
+            this.FEButton.Name = "FEButton";
+            this.FEButton.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.FEButton.Size = new System.Drawing.Size(150, 44);
+            this.FEButton.TabIndex = 4;
+            this.FEButton.Text = "Generate FE";
+            this.FEButton.UseVisualStyleBackColor = true;
+            // 
             // SegmentateCheckBox
             // 
             this.SegmentateCheckBox.Appearance = System.Windows.Forms.Appearance.Button;
             this.SegmentateCheckBox.AutoSize = true;
             this.SegmentateCheckBox.Enabled = false;
-            this.SegmentateCheckBox.Location = new System.Drawing.Point(6, 8);
+            this.SegmentateCheckBox.Location = new System.Drawing.Point(6, 7);
             this.SegmentateCheckBox.Margin = new System.Windows.Forms.Padding(6);
             this.SegmentateCheckBox.Name = "SegmentateCheckBox";
             this.SegmentateCheckBox.Size = new System.Drawing.Size(137, 35);
@@ -371,6 +386,7 @@
         private System.Windows.Forms.Panel panel4;
         private System.Windows.Forms.CheckBox SegmentateCheckBox;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private System.Windows.Forms.Button FEButton;
     }
 }
 
