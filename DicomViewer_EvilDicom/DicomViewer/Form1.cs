@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using EvilDICOM.Core;
 using EvilDICOM.Core.Helpers;
+using OpenCvSharp;
 
 namespace DicomViewer
 {
