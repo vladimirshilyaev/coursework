@@ -24,6 +24,13 @@ namespace DicomViewer
 
         }
 
+        /*public Image FilterImage(string fileName)
+        {
+
+
+            return ;
+        }*/
+
         public void SegmentedArray(string readFileName, string writeFileName, int density)
         {
             var dcm = EvilDICOM.Core.DICOMObject.Read(readFileName);
@@ -52,7 +59,7 @@ namespace DicomViewer
             int index = 0;
             for (int i = 0; i < pixelData.Count; i += 2)
             {
-                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
                 double valgray = gray;
 
                 valgray = slope * valgray + intercept;//modality lut
@@ -84,7 +91,7 @@ namespace DicomViewer
                 for (int j = 0; j < colums ; j ++)
                 {
                     double valgray = segmPixelData[rows*i + j];
-                    valgray = slope * valgray + intercept;
+                    //valgray = slope * valgray + intercept;
 
                     double half = window / 2.0;
 
