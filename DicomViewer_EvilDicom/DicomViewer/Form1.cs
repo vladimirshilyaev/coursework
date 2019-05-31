@@ -24,9 +24,9 @@ namespace DicomViewer
 
         }
 
-        public void SegmentedArray(string fileName, int density)
+        public void SegmentedArray(string readFileName, string writeFileName, int density)
         {
-            var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
+            var dcm = EvilDICOM.Core.DICOMObject.Read(readFileName);
             List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
 
             ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
@@ -112,7 +112,7 @@ namespace DicomViewer
                 }
             }
 
-            StreamWriter sw = new StreamWriter("test_c.txt");
+            StreamWriter sw = new StreamWriter(writeFileName/*"test_c.txt"*/);
             System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
             sw.WriteLine("/PREP7");
 
@@ -125,7 +125,7 @@ namespace DicomViewer
                     k++;
                     for (int j = 0; j < elements[i].nodes.Count(); j++)
                     {
-                        if(k<4000)
+                        //if(k<4000)
                         sw.WriteLine($"N,{ elements[i].nodes[j].id + 1},{elements[i].nodes[j].coordinates.x},{elements[i].nodes[j].coordinates.y},{elements[i].nodes[j].coordinates.z},,,,");
                     }
                 }
@@ -141,8 +141,8 @@ namespace DicomViewer
                if (elements[i].value != 0.0)
                 {
                     k++;
-                    if (k < 4000)
-                    {
+                    //if (k < 4000)
+                    //{
                         sw.WriteLine($"FLST,3,8,1");
                         for (int j = 0; j < elements[i].nodes.Count(); j++)
                         {
@@ -151,7 +151,7 @@ namespace DicomViewer
                         }
                         sw.WriteLine($"EN,{elements[i].FEid+1},P51X");
                         sw.WriteLine(" ");
-                    }
+                   // }
                 }
                
             }
@@ -369,9 +369,11 @@ namespace DicomViewer
                 //pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
                 pictureBox2.Image = SegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
 
-                CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
+                /*CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
                 CurrentDensityTextBox.Enabled = true;
-                SegmentedArray(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
+                SegmentedArray(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);*/
+
+                FEButton.Enabled = true;
             }
             else
                 pictureBox2.Image = null;
@@ -390,6 +392,22 @@ namespace DicomViewer
         private void SaveButton_Click(object sender, EventArgs e)
         {
           
+        }
+
+        private void FEButton_Click(object sender, EventArgs e)
+        {
+            if (SegmentateCheckBox.Checked == true)
+            {
+                CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
+                CurrentDensityTextBox.Enabled = true;
+                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+                    SegmentedArray(openFileDialog1.FileNames[trackBar1.Value - 1], saveFileDialog1.FileName, trackBar2.Value);
+            }
+        }
+
+        private void FilterButton_Click(object sender, EventArgs e)
+        {
+
         }
     }
 

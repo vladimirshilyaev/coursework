@@ -49,6 +49,7 @@
             this.SegmentateCheckBox = new System.Windows.Forms.CheckBox();
             this.CloseButton = new System.Windows.Forms.Button();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.FilterButton = new System.Windows.Forms.Button();
             this.openButton = new System.Windows.Forms.Button();
             this.ClearButton = new System.Windows.Forms.Button();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
@@ -273,6 +274,7 @@
             this.FEButton.TabIndex = 4;
             this.FEButton.Text = "Generate FE";
             this.FEButton.UseVisualStyleBackColor = true;
+            this.FEButton.Click += new System.EventHandler(this.FEButton_Click);
             // 
             // SegmentateCheckBox
             // 
@@ -303,6 +305,7 @@
             // 
             // panel4
             // 
+            this.panel4.Controls.Add(this.FilterButton);
             this.panel4.Controls.Add(this.openButton);
             this.panel4.Controls.Add(this.ClearButton);
             this.panel4.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -311,6 +314,18 @@
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(972, 56);
             this.panel4.TabIndex = 8;
+            // 
+            // FilterButton
+            // 
+            this.FilterButton.Enabled = false;
+            this.FilterButton.Location = new System.Drawing.Point(607, 8);
+            this.FilterButton.Margin = new System.Windows.Forms.Padding(6);
+            this.FilterButton.Name = "FilterButton";
+            this.FilterButton.Size = new System.Drawing.Size(150, 44);
+            this.FilterButton.TabIndex = 2;
+            this.FilterButton.Text = "Filter";
+            this.FilterButton.UseVisualStyleBackColor = true;
+            this.FilterButton.Click += new System.EventHandler(this.FilterButton_Click);
             // 
             // openButton
             // 
@@ -334,6 +349,11 @@
             this.ClearButton.Text = "Clear";
             this.ClearButton.UseVisualStyleBackColor = true;
             this.ClearButton.Click += new System.EventHandler(this.ClearButton_Click);
+            // 
+            // saveFileDialog1
+            // 
+            this.saveFileDialog1.DefaultExt = "txt";
+            this.saveFileDialog1.Filter = "Текстовый документ|*.txt";
             // 
             // Form1
             // 
@@ -387,6 +407,7 @@
         private System.Windows.Forms.CheckBox SegmentateCheckBox;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.Button FEButton;
+        private System.Windows.Forms.Button FilterButton;
     }
 }
 
