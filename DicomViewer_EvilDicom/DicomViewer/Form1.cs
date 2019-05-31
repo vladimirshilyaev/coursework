@@ -229,7 +229,7 @@ namespace DicomViewer
 
             for (int i = 0; i < pixelData.Count; i += 2)
             {
-                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i+1] << 8));
                 double valgray = gray;
 
                 valgray = slope * valgray + intercept;//modality lut
