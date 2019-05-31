@@ -242,7 +242,7 @@ namespace DicomViewer
                 else if (valgray >= level + half)
                     valgray = 255;
                 else
-                    valgray = ((valgray /*- level*/) / window) * 255;
+                    valgray = ((valgray - (level - half)) / window) * 255;
 
                 outPixelData[index] = (byte)valgray;
                 outPixelData[index + 1] = (byte)valgray;
