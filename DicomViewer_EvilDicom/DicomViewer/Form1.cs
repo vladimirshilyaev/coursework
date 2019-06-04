@@ -31,141 +31,143 @@ namespace DicomViewer
             return ;
         }*/
 
-        public void SegmentedArray(string readFileName, string writeFileName, int density)
+        public void GenerateFEFile(string[] readFileNames, string writeFileName, int density)
         {
-            var dcm = EvilDICOM.Core.DICOMObject.Read(readFileName);
-            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
-
-            ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
-            double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
-            double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
-            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-            ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-            double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
-            double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
-
-            List<double> pixelSpacings = (List<double>)dcm.FindFirst(TagHelper.PixelSpacing).DData_;
-            double rowSpacing = pixelSpacings[0];
-            double columnSpacing = pixelSpacings[1];
-
-            double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
-
-            sliceThickness = columnSpacing;
-
-            int size = pixelData.Count;
-            List<double> segmPixelData = new List<double>();//rgba
-            double maxval = Math.Pow(2, bitsStored);
-
-            int index = 0;
-            for (int i = 0; i < pixelData.Count; i += 2)
-            {
-                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
-                double valgray = gray;
-
-                valgray = slope * valgray + intercept;//modality lut
-
-                //This is  the window level algorithm
-                double half = window / 2.0;
-
-                if (valgray <= density)
-                {
-                    //segmPixelData.Insert(i, (byte)0);
-                    //segmPixelData.Insert(i + 1, (byte)0);
-                    segmPixelData.Insert(index, 0.0);
-                }
-                else
-                {
-                    //segmPixelData.Insert(i, (byte)pixelData[i]);
-                    //segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
-                    segmPixelData.Insert(index, valgray);
-                }
-                index++;
-            }
-
-            Element[] elements = new Element[rows*colums];
-            int elementsId = 0;
-            //int nodesID = 0;
-
-            for (int i=0;i<rows;i++)
-            {
-                for (int j = 0; j < colums ; j ++)
-                {
-                    double valgray = segmPixelData[rows*i + j];
-                    //valgray = slope * valgray + intercept;
-
-                    double half = window / 2.0;
-
-                    if (valgray <= level - half)
-                        valgray = 0;
-                    else if (valgray >= level + half)
-                        valgray = maxval;
-
-                    elements[rows * i + j] = new Element();
-                    var currentElement = elements[rows * i + j];
-
-                    currentElement.value = valgray;
-
-                    currentElement.rowNumber = i;
-                    currentElement.columnNumber = j;
-                    currentElement.rowSpacing = rowSpacing;
-                    currentElement.columnSpacing = columnSpacing;
-                    currentElement.sliceThickness = sliceThickness;
-                    if (valgray != 0.0)
-                    {
-                        currentElement.FEid = elementsId;
-                        elementsId++;
-                        currentElement.SetNodes();
-                    }
-                }
-            }
-
-            StreamWriter sw = new StreamWriter(writeFileName/*"test_c.txt"*/);
+            StreamWriter sw = new StreamWriter(writeFileName);
             System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
             sw.WriteLine("/PREP7");
 
-            int k = 0;
-            for (int i=0;i<elements.Count();i++)
+            int sliceIndex = 0;
+
+            for (; sliceIndex < readFileNames.Length;sliceIndex++)
             {
-                
-               if (elements[i].value != 0.0)
+                var dcm = EvilDICOM.Core.DICOMObject.Read(readFileNames[sliceIndex]);
+                List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
+
+                ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
+                double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
+                double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
+                ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
+                ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
+                double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
+                double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+
+                List<double> pixelSpacings = (List<double>)dcm.FindFirst(TagHelper.PixelSpacing).DData_;
+                double rowSpacing = pixelSpacings[0];
+                double columnSpacing = pixelSpacings[1];
+
+                double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
+
+                //sliceThickness = columnSpacing;
+
+                int size = pixelData.Count;
+                List<double> segmPixelData = new List<double>();//rgba
+                double maxval = Math.Pow(2, bitsStored);
+
+                int index = 0;
+                for (int i = 0; i < pixelData.Count; i += 2)
                 {
-                    k++;
-                    for (int j = 0; j < elements[i].nodes.Count(); j++)
+                    short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                    double valgray = gray;
+
+                    valgray = slope * valgray + intercept;//modality lut
+
+                    //This is  the window level algorithm
+                    double half = window / 2.0;
+
+                    if (valgray <= density)
                     {
-                        //if(k<4000)
-                        sw.WriteLine($"N,{ elements[i].nodes[j].id + 1},{elements[i].nodes[j].coordinates.x},{elements[i].nodes[j].coordinates.y},{elements[i].nodes[j].coordinates.z},,,,");
+                        //segmPixelData.Insert(i, (byte)0);
+                        //segmPixelData.Insert(i + 1, (byte)0);
+                        segmPixelData.Insert(index, 0.0);
+                    }
+                    else
+                    {
+                        //segmPixelData.Insert(i, (byte)pixelData[i]);
+                        //segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
+                        segmPixelData.Insert(index, valgray);
+                    }
+                    index++;
+                }
+
+                Element[] elements = new Element[rows * colums];
+                int elementsId = sliceIndex * rows* colums;
+                //int nodesID = 0;
+
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < colums; j++)
+                    {
+                        double valgray = segmPixelData[rows * i + j];
+                        //valgray = slope * valgray + intercept;
+
+                        double half = window / 2.0;
+
+                        if (valgray <= level - half)
+                            valgray = 0;
+                        else if (valgray >= level + half)
+                            valgray = maxval;
+
+                        elements[rows * i + j] = new Element();
+                        var currentElement = elements[rows * i + j];
+
+                        currentElement.value = valgray;
+
+                        currentElement.sliceNumber = sliceIndex;
+
+                        currentElement.rowNumber = i;
+                        currentElement.columnNumber = j;
+                        currentElement.rowSpacing = rowSpacing;
+                        currentElement.columnSpacing = columnSpacing;
+                        currentElement.sliceThickness = sliceThickness;
+                        if (valgray != 0.0)
+                        {
+                            currentElement.FEid = elementsId;
+                            elementsId++;
+                            currentElement.SetNodes();
+                        }
                     }
                 }
-               
-            }
-            sw.WriteLine(" ");
-            sw.WriteLine("ET,1,SOLID185 ");
-            sw.WriteLine(" ");
-            k = 0;
-            for (int i = 0; i < elements.Count(); i++)
-            {
-                
-               if (elements[i].value != 0.0)
+
+                /*
+                StreamWriter sw = new StreamWriter(writeFileName);
+                System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+                sw.WriteLine("/PREP7");
+                */
+
+                for (int i = 0; i < elements.Count(); i++)
                 {
-                    k++;
-                    //if (k < 4000)
-                    //{
+                    if (elements[i].value != 0.0)
+                    {
+                        for (int j = 0; j < elements[i].nodes.Count(); j++)
+                        {
+                            sw.WriteLine($"N,{ elements[i].nodes[j].id + 1},{elements[i].nodes[j].coordinates.x},{elements[i].nodes[j].coordinates.y},{elements[i].nodes[j].coordinates.z},,,,");
+                        }
+                    }
+
+                }
+                sw.WriteLine(" ");
+                sw.WriteLine("ET,1,SOLID185 ");
+                sw.WriteLine(" ");
+                for (int i = 0; i < elements.Count(); i++)
+                {
+                    if (elements[i].value != 0.0)
+                    {
                         sw.WriteLine($"FLST,3,8,1");
                         for (int j = 0; j < elements[i].nodes.Count(); j++)
                         {
-
                             sw.WriteLine($"FITEM,3,{elements[i].nodes[j].id + 1}");
                         }
-                        sw.WriteLine($"EN,{elements[i].FEid+1},P51X");
+                        sw.WriteLine($"EN,{elements[i].FEid + 1},P51X");
                         sw.WriteLine(" ");
-                   // }
+                    }
                 }
-               
+                 
             }
             sw.Close();
         }
 
-        public Image SegmentedImage (string fileName, int density)
+        public Image LoadSegmentedImage (string fileName, int density)
         {
             var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
             List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
@@ -184,7 +186,7 @@ namespace DicomViewer
 
             for (int i = 0; i < pixelData.Count; i += 2)
             {
-                ushort gray = (ushort)((ushort)(pixelData[i]) + (ushort)(pixelData[i + 1] << 8));
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
                 double valgray = gray;
 
                 valgray = slope * valgray + intercept;//modality lut
@@ -203,7 +205,7 @@ namespace DicomViewer
                     segmPixelData.Insert(i + 1, (byte)pixelData[i+1]);
                 }
             }
-            return RgbaArray(segmPixelData, colums, rows, bitsStored, slope, intercept, window, level);
+            return RgbaFromPixelData(segmPixelData, colums, rows, bitsStored, slope, intercept, window, level);
         }
 
         public Image LoadImage(string fileName)
@@ -225,10 +227,10 @@ namespace DicomViewer
             if (!photo.Contains("MONOCHROME"))//just works for gray images
                 return null;
 
-            return RgbaArray(pixelData, columns, rows, bitsStored, slope, intercept, window, level);
+            return RgbaFromPixelData(pixelData, columns, rows, bitsStored, slope, intercept, window, level);
         }
 
-        public Image RgbaArray (List<byte> pixelData, int columns, int rows, int bitsStored, double slope, double intercept, double window, double level)
+        public Bitmap RgbaFromPixelData (List<byte> pixelData, int columns, int rows, int bitsStored, double slope, double intercept, double window, double level)
         {
             int index = 0;
             byte[] outPixelData = new byte[rows * columns * 4];//rgba
@@ -259,11 +261,10 @@ namespace DicomViewer
                 index += 4;
             }
 
-            Image newimage = this.ImageFromRgbaArray(outPixelData, columns, rows);
-            return newimage;
+            return BmpFromRgba(outPixelData, columns, rows);
         }
 
-        public Image ImageFromRgbaArray(byte[] arr, int width, int height)
+        public Bitmap BmpFromRgba(byte[] arr, int width, int height)
         {
             var output = new Bitmap(width, height);
             var rect = new Rectangle(0, 0, width, height);
@@ -324,7 +325,7 @@ namespace DicomViewer
 
             if (SegmentateCheckBox.Checked == true)
             {
-                pictureBox2.Image = SegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value - 1);
+                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value - 1);
             }
         }
 
@@ -374,7 +375,7 @@ namespace DicomViewer
             if (SegmentateCheckBox.Checked == true)
             {
                 //pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
-                pictureBox2.Image = SegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
+                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
 
                 /*CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
                 CurrentDensityTextBox.Enabled = true;
@@ -390,7 +391,7 @@ namespace DicomViewer
         {
             if (SegmentateCheckBox.Checked == true)
             {
-                pictureBox2.Image = SegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
+                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
                 
             }
             CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
@@ -408,7 +409,8 @@ namespace DicomViewer
                 CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
                 CurrentDensityTextBox.Enabled = true;
                 if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-                    SegmentedArray(openFileDialog1.FileNames[trackBar1.Value - 1], saveFileDialog1.FileName, trackBar2.Value);
+                    //GenerateFEFile(openFileDialog1.FileNames[trackBar1.Value - 1], saveFileDialog1.FileName, trackBar2.Value);  
+                    GenerateFEFile(openFileDialog1.FileNames, saveFileDialog1.FileName, trackBar2.Value);
             }
         }
 
@@ -421,6 +423,8 @@ namespace DicomViewer
     public class Element
     {
         public int FEid;
+
+        public int sliceNumber;
 
         public int rowNumber;
         public int columnNumber;
@@ -459,7 +463,7 @@ namespace DicomViewer
         {
             center.x = columnSpacing / 2 + columnNumber*columnSpacing;
             center.y = -rowSpacing / 2 - rowNumber * rowSpacing;
-            center.z = sliceThickness / 2;
+            center.z = sliceThickness/2 + sliceNumber*sliceThickness;
             
             for (int i=0;i<nodes.Count();i++)
             {
@@ -469,35 +473,35 @@ namespace DicomViewer
 
             nodes[0].coordinates.x = center.x - columnSpacing / 2;
             nodes[0].coordinates.y = center.y - rowSpacing / 2;
-            nodes[0].coordinates.z = 0;
+            nodes[0].coordinates.z = center.z - sliceThickness/2;
             
             nodes[1].coordinates.x = center.x + columnSpacing / 2;
             nodes[1].coordinates.y = center.y - rowSpacing / 2;
-            nodes[1].coordinates.z = 0;
+            nodes[1].coordinates.z = center.z - sliceThickness / 2;
             
             nodes[2].coordinates.x = center.x + columnSpacing / 2;
             nodes[2].coordinates.y = center.y + rowSpacing / 2;
-            nodes[2].coordinates.z = 0;
+            nodes[2].coordinates.z = center.z - sliceThickness / 2;
             
             nodes[3].coordinates.x = center.x - columnSpacing / 2;
             nodes[3].coordinates.y = center.y + rowSpacing / 2;
-            nodes[3].coordinates.z = 0;
+            nodes[3].coordinates.z = center.z - sliceThickness / 2;
            
             nodes[4].coordinates.x = center.x - columnSpacing / 2;
             nodes[4].coordinates.y = center.y - rowSpacing / 2;
-            nodes[4].coordinates.z = sliceThickness;
+            nodes[4].coordinates.z = center.z + sliceThickness / 2;
             
             nodes[5].coordinates.x = center.x + columnSpacing / 2;
             nodes[5].coordinates.y = center.y - rowSpacing / 2;
-            nodes[5].coordinates.z = sliceThickness;
+            nodes[5].coordinates.z = center.z + sliceThickness / 2;
            
             nodes[6].coordinates.x = center.x + columnSpacing / 2;
             nodes[6].coordinates.y = center.y + rowSpacing / 2;
-            nodes[6].coordinates.z = sliceThickness;
+            nodes[6].coordinates.z = center.z + sliceThickness / 2;
           
             nodes[7].coordinates.x = center.x - columnSpacing / 2;
             nodes[7].coordinates.y = center.y + rowSpacing / 2;
-            nodes[7].coordinates.z = sliceThickness;
+            nodes[7].coordinates.z = center.z + sliceThickness / 2;
            
         }
 
