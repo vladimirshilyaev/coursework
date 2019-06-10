@@ -159,7 +159,7 @@ namespace DicomViewer
                             sw.WriteLine($"FITEM,3,{elements[i].nodes[j].id + 1}");
                         }
                         sw.WriteLine($"EN,{elements[i].FEid + 1},P51X");
-                        sw.WriteLine(" ");
+                        //sw.WriteLine(" ");
                     }
                 }
                  
