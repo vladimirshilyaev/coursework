@@ -129,41 +129,35 @@ namespace DicomViewer
                     }
                 }
 
-                /*
-                StreamWriter sw = new StreamWriter(writeFileName);
-                System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
-                sw.WriteLine("/PREP7");
-                */
-
-                for (int i = 0; i < elements.Count(); i++)
-                {
-                    if (elements[i].value != 0.0)
-                    {
-                        for (int j = 0; j < elements[i].nodes.Count(); j++)
-                        {
-                            sw.WriteLine($"N,{ elements[i].nodes[j].id + 1},{elements[i].nodes[j].coordinates.x},{elements[i].nodes[j].coordinates.y},{elements[i].nodes[j].coordinates.z},,,,");
-                        }
-                    }
-
-                }
-                sw.WriteLine(" ");
                 sw.WriteLine("ET,1,SOLID185 ");
-                sw.WriteLine(" ");
+
                 for (int i = 0; i < elements.Count(); i++)
                 {
                     if (elements[i].value != 0.0)
                     {
-                        sw.WriteLine($"FLST,3,8,1");
                         for (int j = 0; j < elements[i].nodes.Count(); j++)
                         {
-                            sw.WriteLine($"FITEM,3,{elements[i].nodes[j].id + 1}");
+                            sw.WriteLine($"N,{ elements[i].nodes[j].id + 1}," +
+                                $"{elements[i].nodes[j].coordinates.x}," +
+                                $"{elements[i].nodes[j].coordinates.y}," +
+                                $"{elements[i].nodes[j].coordinates.z},,,,");
                         }
-                        sw.WriteLine($"EN,{elements[i].FEid + 1},P51X");
-                        sw.WriteLine(" ");
+                        sw.WriteLine($"EN,{elements[i].FEid + 1}," +
+                            $"{elements[i].nodes[0].id + 1}," +
+                            $"{elements[i].nodes[1].id + 1}," +
+                            $"{elements[i].nodes[2].id + 1}," +
+                            $"{elements[i].nodes[3].id + 1}," +
+                            $"{elements[i].nodes[4].id + 1}," +
+                            $"{elements[i].nodes[5].id + 1}," +
+                            $"{elements[i].nodes[6].id + 1}," +
+                            $"{elements[i].nodes[7].id + 1}");
                     }
                 }
-                 
             }
+
+            sw.WriteLine("NUMMRG, NODE, , , , ");
+            sw.WriteLine("NUMCMP, NODE");
+
             sw.Close();
         }
 
