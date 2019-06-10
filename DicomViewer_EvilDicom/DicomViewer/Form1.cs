@@ -24,12 +24,56 @@ namespace DicomViewer
 
         }
 
-        /*public Image FilterImage(string fileName)
+        /*public Image LoadFilteredImage(string fileName)
         {
+            var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
+            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
 
+            ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
+            double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
+            double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
+            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
+            ushort columns = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
+            double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
+            double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
 
-            return ;
-        }*/
+            List<double> pixelSpacings = (List<double>)dcm.FindFirst(TagHelper.PixelSpacing).DData_;
+            double rowSpacing = pixelSpacings[0];
+            double columnSpacing = pixelSpacings[1];
+
+            double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
+
+            //sliceThickness = columnSpacing;
+
+            int size = pixelData.Count;
+            List<double> segmPixelData = new List<double>();//rgba
+            double maxval = Math.Pow(2, bitsStored);
+
+            int index = 0;
+            for (int i = 0; i < pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                valgray = slope * valgray + intercept;//modality lut
+
+                //This is  the window level algorithm
+                double half = window / 2.0;
+
+                segmPixelData.Insert(index, valgray);
+                
+                index++;
+            }
+
+            List<double> filteredPixelData = new List<double>();
+
+            OpenCvSharp.Mat src = new Mat(rows, columns, MatType.CV_16UC1,pixelData,);
+
+            Cv2.BilateralFilter(segmPixelData,filteredPixelData, 9, 50, 50, BorderTypes.Default);
+
+            return RgbaFromPixelData(pixelData, columns, rows, bitsStored, slope, intercept, window, level); ;
+        }
+        */
 
         public void GenerateFEFile(string[] readFileNames, string writeFileName, int density)
         {
@@ -170,7 +214,7 @@ namespace DicomViewer
             double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
             double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
             ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-            ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
+            ushort columns = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
             double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
             double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
             
@@ -199,7 +243,7 @@ namespace DicomViewer
                     segmPixelData.Insert(i + 1, (byte)pixelData[i+1]);
                 }
             }
-            return RgbaFromPixelData(segmPixelData, colums, rows, bitsStored, slope, intercept, window, level);
+            return RgbaFromPixelData(segmPixelData, columns, rows, bitsStored, slope, intercept, window, level);
         }
 
         public Image LoadImage(string fileName)
