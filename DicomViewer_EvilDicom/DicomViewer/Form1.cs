@@ -24,7 +24,7 @@ namespace DicomViewer
 
         }
 
-        /*public Image LoadFilteredImage(string fileName)
+        public Image LoadFilteredImage(string fileName, int density, int Diameter, int SigmaColor, int SigmaSpace)
         {
             var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
             List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
@@ -43,13 +43,10 @@ namespace DicomViewer
 
             double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
 
-            //sliceThickness = columnSpacing;
-
             int size = pixelData.Count;
-            List<double> segmPixelData = new List<double>();//rgba
+            List<byte> segmPixelData = new List<byte>();//rgba
             double maxval = Math.Pow(2, bitsStored);
 
-            int index = 0;
             for (int i = 0; i < pixelData.Count; i += 2)
             {
                 short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
@@ -60,20 +57,37 @@ namespace DicomViewer
                 //This is  the window level algorithm
                 double half = window / 2.0;
 
-                segmPixelData.Insert(index, valgray);
-                
-                index++;
+                if (valgray <= density)
+                {
+                    segmPixelData.Insert(i, (byte)0);
+                    segmPixelData.Insert(i + 1, (byte)0);
+                }
+                else
+                {
+                    segmPixelData.Insert(i, (byte)pixelData[i]);
+                    segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
+                }
             }
 
-            List<double> filteredPixelData = new List<double>();
+            byte[] srcBytes = new byte[segmPixelData.Count];
+            srcBytes = segmPixelData.ToArray();
 
-            OpenCvSharp.Mat src = new Mat(rows, columns, MatType.CV_16UC1,pixelData,);
+            OpenCvSharp.Mat src = new Mat(rows,columns*2,MatType.CV_8UC1);
+            OpenCvSharp.Mat dst = new Mat(rows, columns * 2, MatType.CV_8UC1);
 
-            Cv2.BilateralFilter(segmPixelData,filteredPixelData, 9, 50, 50, BorderTypes.Default);
+            src.SetArray (0, 0, srcBytes);
 
-            return RgbaFromPixelData(pixelData, columns, rows, bitsStored, slope, intercept, window, level); ;
+            Cv2.BilateralFilter(src, dst, Diameter, SigmaColor, SigmaSpace, BorderTypes.Default);
+
+            byte[] dstBytes = new byte[segmPixelData.Count];
+
+            dst.GetArray(0,0,dstBytes);
+
+            List<byte> filteredPixels = new List<byte>(dstBytes);
+            
+
+            return RgbaFromPixelData(filteredPixels, columns, rows, bitsStored, slope, intercept, window, level); ;
         }
-        */
 
         public void GenerateFEFile(string[] readFileNames, string writeFileName, int density)
         {
@@ -454,7 +468,7 @@ namespace DicomViewer
 
         private void FilterButton_Click(object sender, EventArgs e)
         {
-
+            pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[trackBar1.Value - 1],trackBar2.Value,Int32.Parse(DiameterTextBox.Text) , Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
         }
     }
 

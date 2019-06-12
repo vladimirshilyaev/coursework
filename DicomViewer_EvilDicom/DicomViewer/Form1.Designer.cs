@@ -49,12 +49,18 @@
             this.SegmentateCheckBox = new System.Windows.Forms.CheckBox();
             this.CloseButton = new System.Windows.Forms.Button();
             this.panel4 = new System.Windows.Forms.Panel();
-            this.FilterButton = new System.Windows.Forms.Button();
             this.openButton = new System.Windows.Forms.Button();
             this.ClearButton = new System.Windows.Forms.Button();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.panel5 = new System.Windows.Forms.Panel();
+            this.SigmaSpaceLabel = new System.Windows.Forms.Label();
+            this.SigmaColorLabel = new System.Windows.Forms.Label();
+            this.DiameterLabel = new System.Windows.Forms.Label();
+            this.SigmaSpaceTextBox = new System.Windows.Forms.TextBox();
+            this.SigmaColorTextBox = new System.Windows.Forms.TextBox();
+            this.DiameterTextBox = new System.Windows.Forms.TextBox();
             this.panel6 = new System.Windows.Forms.Panel();
+            this.FilterButton = new System.Windows.Forms.Button();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -66,6 +72,7 @@
             this.panel3.SuspendLayout();
             this.panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
+            this.panel5.SuspendLayout();
             this.panel6.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -96,7 +103,7 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 87.7907F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 12.2093F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(1256, 536);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(1261, 536);
             this.tableLayoutPanel1.TabIndex = 0;
             // 
             // pictureBox1
@@ -105,7 +112,7 @@
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox1.Location = new System.Drawing.Point(3, 3);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(412, 433);
+            this.pictureBox1.Size = new System.Drawing.Size(414, 433);
             this.pictureBox1.TabIndex = 2;
             this.pictureBox1.TabStop = false;
             // 
@@ -113,9 +120,9 @@
             // 
             this.pictureBox2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.pictureBox2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pictureBox2.Location = new System.Drawing.Point(421, 3);
+            this.pictureBox2.Location = new System.Drawing.Point(423, 3);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(412, 433);
+            this.pictureBox2.Size = new System.Drawing.Size(414, 433);
             this.pictureBox2.TabIndex = 3;
             this.pictureBox2.TabStop = false;
             // 
@@ -126,7 +133,7 @@
             this.panel1.Controls.Add(this.MinDensityLabel);
             this.panel1.Controls.Add(this.MaxDensityLabel);
             this.panel1.Controls.Add(this.trackBar2);
-            this.panel1.Location = new System.Drawing.Point(421, 442);
+            this.panel1.Location = new System.Drawing.Point(423, 442);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(410, 55);
             this.panel1.TabIndex = 5;
@@ -191,7 +198,7 @@
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(3, 442);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(412, 55);
+            this.panel2.Size = new System.Drawing.Size(414, 55);
             this.panel2.TabIndex = 6;
             // 
             // CurrentSliceLabel
@@ -239,7 +246,7 @@
             this.trackBar1.Location = new System.Drawing.Point(0, 0);
             this.trackBar1.Minimum = 1;
             this.trackBar1.Name = "trackBar1";
-            this.trackBar1.Size = new System.Drawing.Size(412, 45);
+            this.trackBar1.Size = new System.Drawing.Size(414, 45);
             this.trackBar1.TabIndex = 4;
             this.trackBar1.Value = 1;
             this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
@@ -250,16 +257,16 @@
             this.panel3.Controls.Add(this.SegmentateCheckBox);
             this.panel3.Controls.Add(this.CloseButton);
             this.panel3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel3.Location = new System.Drawing.Point(421, 503);
+            this.panel3.Location = new System.Drawing.Point(423, 503);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(412, 30);
+            this.panel3.Size = new System.Drawing.Size(414, 30);
             this.panel3.TabIndex = 7;
             // 
             // FEButton
             // 
             this.FEButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.FEButton.Enabled = false;
-            this.FEButton.Location = new System.Drawing.Point(83, 4);
+            this.FEButton.Location = new System.Drawing.Point(86, 5);
             this.FEButton.Name = "FEButton";
             this.FEButton.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.FEButton.Size = new System.Drawing.Size(75, 23);
@@ -284,7 +291,7 @@
             // CloseButton
             // 
             this.CloseButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.CloseButton.Location = new System.Drawing.Point(334, 3);
+            this.CloseButton.Location = new System.Drawing.Point(336, 4);
             this.CloseButton.Name = "CloseButton";
             this.CloseButton.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.CloseButton.Size = new System.Drawing.Size(75, 23);
@@ -300,19 +307,8 @@
             this.panel4.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel4.Location = new System.Drawing.Point(3, 503);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(412, 30);
+            this.panel4.Size = new System.Drawing.Size(414, 30);
             this.panel4.TabIndex = 8;
-            // 
-            // FilterButton
-            // 
-            this.FilterButton.Enabled = false;
-            this.FilterButton.Location = new System.Drawing.Point(183, 5);
-            this.FilterButton.Name = "FilterButton";
-            this.FilterButton.Size = new System.Drawing.Size(75, 23);
-            this.FilterButton.TabIndex = 2;
-            this.FilterButton.Text = "Filter";
-            this.FilterButton.UseVisualStyleBackColor = true;
-            this.FilterButton.Click += new System.EventHandler(this.FilterButton_Click);
             // 
             // openButton
             // 
@@ -339,31 +335,95 @@
             // 
             this.pictureBox3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.pictureBox3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pictureBox3.Location = new System.Drawing.Point(838, 2);
+            this.pictureBox3.Location = new System.Drawing.Point(842, 2);
             this.pictureBox3.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox3.Name = "pictureBox3";
-            this.pictureBox3.Size = new System.Drawing.Size(416, 435);
+            this.pictureBox3.Size = new System.Drawing.Size(417, 435);
             this.pictureBox3.TabIndex = 9;
             this.pictureBox3.TabStop = false;
             // 
             // panel5
             // 
+            this.panel5.Controls.Add(this.SigmaSpaceLabel);
+            this.panel5.Controls.Add(this.SigmaColorLabel);
+            this.panel5.Controls.Add(this.DiameterLabel);
+            this.panel5.Controls.Add(this.SigmaSpaceTextBox);
+            this.panel5.Controls.Add(this.SigmaColorTextBox);
+            this.panel5.Controls.Add(this.DiameterTextBox);
             this.panel5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel5.Location = new System.Drawing.Point(838, 441);
+            this.panel5.Location = new System.Drawing.Point(842, 441);
             this.panel5.Margin = new System.Windows.Forms.Padding(2);
             this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(416, 57);
+            this.panel5.Size = new System.Drawing.Size(417, 57);
             this.panel5.TabIndex = 10;
+            // 
+            // SigmaSpaceLabel
+            // 
+            this.SigmaSpaceLabel.AutoSize = true;
+            this.SigmaSpaceLabel.Location = new System.Drawing.Point(322, 33);
+            this.SigmaSpaceLabel.Name = "SigmaSpaceLabel";
+            this.SigmaSpaceLabel.Size = new System.Drawing.Size(67, 13);
+            this.SigmaSpaceLabel.TabIndex = 5;
+            this.SigmaSpaceLabel.Text = "SigmaSpace";
+            // 
+            // SigmaColorLabel
+            // 
+            this.SigmaColorLabel.AutoSize = true;
+            this.SigmaColorLabel.Location = new System.Drawing.Point(189, 33);
+            this.SigmaColorLabel.Name = "SigmaColorLabel";
+            this.SigmaColorLabel.Size = new System.Drawing.Size(60, 13);
+            this.SigmaColorLabel.TabIndex = 4;
+            this.SigmaColorLabel.Text = "SigmaColor";
+            // 
+            // DiameterLabel
+            // 
+            this.DiameterLabel.AutoSize = true;
+            this.DiameterLabel.Location = new System.Drawing.Point(49, 33);
+            this.DiameterLabel.Name = "DiameterLabel";
+            this.DiameterLabel.Size = new System.Drawing.Size(49, 13);
+            this.DiameterLabel.TabIndex = 3;
+            this.DiameterLabel.Text = "Diameter";
+            // 
+            // SigmaSpaceTextBox
+            // 
+            this.SigmaSpaceTextBox.Location = new System.Drawing.Point(307, 10);
+            this.SigmaSpaceTextBox.Name = "SigmaSpaceTextBox";
+            this.SigmaSpaceTextBox.Size = new System.Drawing.Size(100, 20);
+            this.SigmaSpaceTextBox.TabIndex = 2;
+            // 
+            // SigmaColorTextBox
+            // 
+            this.SigmaColorTextBox.Location = new System.Drawing.Point(169, 10);
+            this.SigmaColorTextBox.Name = "SigmaColorTextBox";
+            this.SigmaColorTextBox.Size = new System.Drawing.Size(100, 20);
+            this.SigmaColorTextBox.TabIndex = 1;
+            // 
+            // DiameterTextBox
+            // 
+            this.DiameterTextBox.Location = new System.Drawing.Point(21, 10);
+            this.DiameterTextBox.Name = "DiameterTextBox";
+            this.DiameterTextBox.Size = new System.Drawing.Size(100, 20);
+            this.DiameterTextBox.TabIndex = 0;
             // 
             // panel6
             // 
             this.panel6.Controls.Add(this.FilterButton);
             this.panel6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel6.Location = new System.Drawing.Point(838, 502);
+            this.panel6.Location = new System.Drawing.Point(842, 502);
             this.panel6.Margin = new System.Windows.Forms.Padding(2);
             this.panel6.Name = "panel6";
-            this.panel6.Size = new System.Drawing.Size(416, 32);
+            this.panel6.Size = new System.Drawing.Size(417, 32);
             this.panel6.TabIndex = 11;
+            // 
+            // FilterButton
+            // 
+            this.FilterButton.Location = new System.Drawing.Point(183, 5);
+            this.FilterButton.Name = "FilterButton";
+            this.FilterButton.Size = new System.Drawing.Size(75, 23);
+            this.FilterButton.TabIndex = 2;
+            this.FilterButton.Text = "Filter";
+            this.FilterButton.UseVisualStyleBackColor = true;
+            this.FilterButton.Click += new System.EventHandler(this.FilterButton_Click);
             // 
             // saveFileDialog1
             // 
@@ -375,7 +435,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(1256, 536);
+            this.ClientSize = new System.Drawing.Size(1261, 536);
             this.Controls.Add(this.tableLayoutPanel1);
             this.MaximizeBox = false;
             this.Name = "Form1";
@@ -393,6 +453,8 @@
             this.panel3.PerformLayout();
             this.panel4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
+            this.panel5.ResumeLayout(false);
+            this.panel5.PerformLayout();
             this.panel6.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -427,6 +489,12 @@
         private System.Windows.Forms.PictureBox pictureBox3;
         private System.Windows.Forms.Panel panel5;
         private System.Windows.Forms.Panel panel6;
+        private System.Windows.Forms.TextBox SigmaSpaceTextBox;
+        private System.Windows.Forms.TextBox SigmaColorTextBox;
+        private System.Windows.Forms.TextBox DiameterTextBox;
+        private System.Windows.Forms.Label SigmaSpaceLabel;
+        private System.Windows.Forms.Label SigmaColorLabel;
+        private System.Windows.Forms.Label DiameterLabel;
     }
 }
 
