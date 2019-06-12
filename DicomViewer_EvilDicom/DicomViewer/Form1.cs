@@ -262,24 +262,9 @@ namespace DicomViewer
 
         public Image LoadImage(string fileName)
         {
-            var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
-            string photo = dcm.FindFirst(TagHelper.PhotometricInterpretation).DData.ToString();
-            ushort bitsAllocated = (ushort)dcm.FindFirst(TagHelper.BitsAllocated).DData;
-            ushort highBit = (ushort)dcm.FindFirst(TagHelper.HighBit).DData;
-            ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
-            double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
-            double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
-            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-            ushort columns = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-            ushort pixelRepresentation = (ushort)dcm.FindFirst(TagHelper.PixelRepresentation).DData;
-            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
-            double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
-            double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+            DicomEntity dcm = new DicomEntity(fileName);
 
-            if (!photo.Contains("MONOCHROME"))//just works for gray images
-                return null;
-
-            return RgbaFromPixelData(pixelData, columns, rows, bitsStored, slope, intercept, window, level);
+            return RgbaFromPixelData(dcm.pixelData, dcm.columns, dcm.rows, dcm.bitsStored, dcm.slope, dcm.intercept, dcm.window, dcm.level);
         }
 
         public Bitmap RgbaFromPixelData (List<byte> pixelData, int columns, int rows, int bitsStored, double slope, double intercept, double window, double level)
@@ -485,31 +470,25 @@ namespace DicomViewer
         public double columnSpacing;
         public double sliceThickness;
 
-        public struct coords
+        public double value;
+
+        public struct Coords
         {
             public double x;
             public double y;
             public double z;
-
-            public coords (int x, int y, int z)
-            {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-            }
         }
 
-        public coords center = new coords();
-        //public coords[] Nodes = new coords[8];
+        public Coords center = new Coords();
 
-        public struct node
+        public struct Node
         {
             public int id;
             public int ElementId;
-            public coords coordinates;
+            public Coords coordinates;
         }
 
-        public node[] nodes = new node[8];
+        public Node[] nodes = new Node[8];
 
         public void SetNodes()
         {
@@ -554,10 +533,48 @@ namespace DicomViewer
             nodes[7].coordinates.x = center.x - columnSpacing / 2;
             nodes[7].coordinates.y = center.y + rowSpacing / 2;
             nodes[7].coordinates.z = center.z + sliceThickness / 2;
-           
         }
+    }
 
-        public double value;
+    public class DicomEntity
+    {
+        public EvilDICOM.Core.DICOMObject dcm;
+
+        public ushort bitsStored;
+        public double intercept;
+        public double slope;
+        public ushort rows;
+        public ushort columns;
+        public double window;
+        public double level;
+
+        public double rowSpacing;
+        public double columnSpacing;
+
+        public double sliceThickness;
+
+        public List<byte> pixelData;
+
+        public DicomEntity(string FileName)
+        {
+            dcm = EvilDICOM.Core.DICOMObject.Read(FileName);
+
+            bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
+            intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
+            slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
+            rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
+            columns = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
+            window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
+            level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+
+            List<double> pixelSpacings = (List<double>)dcm.FindFirst(TagHelper.PixelSpacing).DData_;
+            rowSpacing = pixelSpacings[0];
+            columnSpacing = pixelSpacings[1];
+
+            sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
+
+            pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
+        }
     }
 }
 
