@@ -24,69 +24,15 @@ namespace DicomViewer
 
         }
 
-        public Image LoadFilteredImage(string fileName, int density, int Diameter, int SigmaColor, int SigmaSpace)
+        public Image LoadFilteredImage(string fileName, int density, int diameter, int sigmaColor, int sigmaSpace)
         {
-            var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
-            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
+            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
 
-            ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
-            double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
-            double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
-            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-            ushort columns = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-            double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
-            double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+            List<byte> segmPixelData = dcmWork.Segmentate(density);
 
-            List<double> pixelSpacings = (List<double>)dcm.FindFirst(TagHelper.PixelSpacing).DData_;
-            double rowSpacing = pixelSpacings[0];
-            double columnSpacing = pixelSpacings[1];
+            List<byte> filteredPixels = dcmWork.BilateralFilter(segmPixelData, diameter, sigmaColor, sigmaSpace);
 
-            double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
-
-            int size = pixelData.Count;
-            List<byte> segmPixelData = new List<byte>();//rgba
-            double maxval = Math.Pow(2, bitsStored);
-
-            for (int i = 0; i < pixelData.Count; i += 2)
-            {
-                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
-                double valgray = gray;
-
-                valgray = slope * valgray + intercept;//modality lut
-
-                //This is  the window level algorithm
-                double half = window / 2.0;
-
-                if (valgray <= density)
-                {
-                    segmPixelData.Insert(i, (byte)0);
-                    segmPixelData.Insert(i + 1, (byte)0);
-                }
-                else
-                {
-                    segmPixelData.Insert(i, (byte)pixelData[i]);
-                    segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
-                }
-            }
-
-            byte[] srcBytes = new byte[segmPixelData.Count];
-            srcBytes = segmPixelData.ToArray();
-
-            OpenCvSharp.Mat src = new Mat(rows,columns*2,MatType.CV_8UC1);
-            OpenCvSharp.Mat dst = new Mat(rows, columns * 2, MatType.CV_8UC1);
-
-            src.SetArray (0, 0, srcBytes);
-
-            Cv2.BilateralFilter(src, dst, Diameter, SigmaColor, SigmaSpace, BorderTypes.Default);
-
-            byte[] dstBytes = new byte[segmPixelData.Count];
-
-            dst.GetArray(0,0,dstBytes);
-
-            List<byte> filteredPixels = new List<byte>(dstBytes);
-            
-
-            return RgbaFromPixelData(filteredPixels, columns, rows, bitsStored, slope, intercept, window, level); ;
+            return dcmWork.RgbaFromPixelData(filteredPixels);
         }
 
         public void GenerateFEFile(string[] readFileNames, string writeFileName, int density)
@@ -221,50 +167,16 @@ namespace DicomViewer
 
         public Image LoadSegmentedImage (string fileName, int density)
         {
-            var dcm = EvilDICOM.Core.DICOMObject.Read(fileName);
-            List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
+            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
 
-            ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
-            double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
-            double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
-            ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-            ushort columns = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-            double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
-            double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
-            
-            int size = pixelData.Count;
-            List<byte> segmPixelData = new List<byte>();//rgba
-            double maxval = Math.Pow(2, bitsStored);
-
-            for (int i = 0; i < pixelData.Count; i += 2)
-            {
-                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
-                double valgray = gray;
-
-                valgray = slope * valgray + intercept;//modality lut
-
-                //This is  the window level algorithm
-                double half = window / 2.0;
-
-                if (valgray <= density)
-                {
-                    segmPixelData.Insert(i,(byte)0);
-                    segmPixelData.Insert(i+1, (byte)0);
-                }
-                else
-                {
-                    segmPixelData.Insert(i, (byte)pixelData[i]);
-                    segmPixelData.Insert(i + 1, (byte)pixelData[i+1]);
-                }
-            }
-            return RgbaFromPixelData(segmPixelData, columns, rows, bitsStored, slope, intercept, window, level);
+            return dcmWork.RgbaFromPixelData(dcmWork.Segmentate(density));
         }
 
         public Image LoadImage(string fileName)
         {
-            DicomEntity dcm = new DicomEntity(fileName);
+            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
 
-            return RgbaFromPixelData(dcm.pixelData, dcm.columns, dcm.rows, dcm.bitsStored, dcm.slope, dcm.intercept, dcm.window, dcm.level);
+            return dcmWork.RgbaFromPixelData(dcmWork.dcm.pixelData);
         }
 
         public Bitmap RgbaFromPixelData (List<byte> pixelData, int columns, int rows, int bitsStored, double slope, double intercept, double window, double level)
@@ -576,5 +488,113 @@ namespace DicomViewer
             pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
         }
     }
+
+    public class DicomWorkshop
+    {
+        public DicomEntity dcm;
+
+        public DicomWorkshop(string fileName)
+        {
+            dcm = new DicomEntity(fileName);
+        }
+
+        public List<byte> Segmentate(int density)
+        {
+            int size = dcm.pixelData.Count;
+            List<byte> segmPixelData = new List<byte>();//rgba
+            double maxval = Math.Pow(2, dcm.bitsStored);
+
+            for (int i = 0; i < dcm.pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(dcm.pixelData[i]) + (short)(dcm.pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                valgray = dcm.slope * valgray + dcm.intercept;//modality lut
+
+                //This is  the window level algorithm
+                double half = dcm.window / 2.0;
+
+                if (valgray <= density)
+                {
+                    segmPixelData.Insert(i, (byte)0);
+                    segmPixelData.Insert(i + 1, (byte)0);
+                }
+                else
+                {
+                    segmPixelData.Insert(i, (byte)dcm.pixelData[i]);
+                    segmPixelData.Insert(i + 1, (byte)dcm.pixelData[i + 1]);
+                }
+            }
+            return segmPixelData;
+        }
+
+        public Bitmap RgbaFromPixelData(List<byte> pixelData)
+        {
+            int index = 0;
+            byte[] outPixelData = new byte[dcm.rows * dcm.columns * 4];//rgba
+            double maxval = Math.Pow(2, dcm.bitsStored);
+
+            for (int i = 0; i < pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                valgray = dcm.slope * valgray + dcm.intercept;//modality lut
+
+                //This is  the window level algorithm
+                double half = dcm.window / 2.0;
+
+                if (valgray <= dcm.level - half)
+                    valgray = 0;
+                else if (valgray >= dcm.level + half)
+                    valgray = 255;
+                else
+                    valgray = ((valgray - (dcm.level - half)) / dcm.window) * 255;
+
+                outPixelData[index] = (byte)valgray;
+                outPixelData[index + 1] = (byte)valgray;
+                outPixelData[index + 2] = (byte)valgray;
+                outPixelData[index + 3] = 255;
+
+                index += 4;
+            }
+            return BmpFromRgba(outPixelData);
+        }
+
+        private Bitmap BmpFromRgba(byte[] arr)
+        {
+            var output = new Bitmap(dcm.columns, dcm.rows);
+            var rect = new Rectangle(0, 0, dcm.columns, dcm.rows);
+            var bmpData = output.LockBits(rect,
+                ImageLockMode.ReadWrite, output.PixelFormat);
+            var ptr = bmpData.Scan0;
+            Marshal.Copy(arr, 0, ptr, arr.Length);
+            output.UnlockBits(bmpData);
+            return output;
+        }
+
+        public List<byte> BilateralFilter (List<byte> pixelData, int diameter, int sigmaColor, int sigmaSpace)
+        {
+            byte[] srcBytes = new byte[pixelData.Count];
+            srcBytes = pixelData.ToArray();
+
+            OpenCvSharp.Mat src = new Mat(dcm.rows, dcm.columns * 2, MatType.CV_8UC1);
+            OpenCvSharp.Mat dst = new Mat(dcm.rows, dcm.columns * 2, MatType.CV_8UC1);
+
+            src.SetArray(0, 0, srcBytes);
+
+            Cv2.BilateralFilter(src, dst, diameter, sigmaColor, sigmaSpace, BorderTypes.Default);
+
+            byte[] dstBytes = new byte[pixelData.Count];
+
+            dst.GetArray(0, 0, dstBytes);
+
+            List<byte> filteredPixels = new List<byte>(dstBytes);
+
+            return filteredPixels;
+        }
+
+    }
+    
 }
 
