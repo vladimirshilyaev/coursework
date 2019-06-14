@@ -45,94 +45,36 @@ namespace DicomViewer
 
             for (; sliceIndex < readFileNames.Length;sliceIndex++)
             {
-                var dcm = EvilDICOM.Core.DICOMObject.Read(readFileNames[sliceIndex]);
-                List<byte> pixelData = (List<byte>)dcm.FindFirst(TagHelper.PixelData).DData_;
+                DicomWorkshop dcmWork = new DicomWorkshop(readFileNames[sliceIndex]);
 
-                ushort bitsStored = (ushort)dcm.FindFirst(TagHelper.BitsStored).DData;
-                double intercept = (double)dcm.FindFirst(TagHelper.RescaleIntercept).DData;
-                double slope = (double)dcm.FindFirst(TagHelper.RescaleSlope).DData;
-                ushort rows = (ushort)dcm.FindFirst(TagHelper.Rows).DData;
-                ushort colums = (ushort)dcm.FindFirst(TagHelper.Columns).DData;
-                double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
-                double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
+                List<byte> segmPixelData = dcmWork.Segmentate(density);
 
-                List<double> pixelSpacings = (List<double>)dcm.FindFirst(TagHelper.PixelSpacing).DData_;
-                double rowSpacing = pixelSpacings[0];
-                double columnSpacing = pixelSpacings[1];
+                List<FinateElement> elements = new List<FinateElement>(/*dcmWork.dcm.rows*dcmWork.dcm.columns*/);
+                //FinateElement[] elements = new FinateElement[dcmWork.dcm.rows * dcmWork.dcm.columns];
+                int elementsId = sliceIndex * dcmWork.dcm.rows * dcmWork.dcm.columns;
+                //int nodesID = 0;
+                int feIndex = 0;
 
-                double sliceThickness = (double)dcm.FindFirst(TagHelper.SliceThickness).DData;
-
-                //sliceThickness = columnSpacing;
-
-                int size = pixelData.Count;
-                List<double> segmPixelData = new List<double>();//rgba
-                double maxval = Math.Pow(2, bitsStored);
-
-                int index = 0;
-                for (int i = 0; i < pixelData.Count; i += 2)
+                for (int i=0; i<segmPixelData.Count;i+=2)
                 {
-                    short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                    short gray = (short)((short)(segmPixelData[i]) + (short)(segmPixelData[i + 1] << 8));
                     double valgray = gray;
 
-                    valgray = slope * valgray + intercept;//modality lut
+                    //valgray = dcmWork.dcm.slope * valgray + dcmWork.dcm.intercept;
 
-                    //This is  the window level algorithm
-                    double half = window / 2.0;
-
-                    if (valgray <= density)
+                    
+                    if (valgray!=0)
                     {
-                        //segmPixelData.Insert(i, (byte)0);
-                        //segmPixelData.Insert(i + 1, (byte)0);
-                        segmPixelData.Insert(index, 0.0);
+                        elements.Add(new FinateElement(elementsId, sliceIndex, (i/2) / dcmWork.dcm.rows, (i/2) % dcmWork.dcm.rows, dcmWork.dcm.sliceThickness,
+                        dcmWork.dcm.rowSpacing, dcmWork.dcm.columnSpacing));
+                        elements[feIndex].value = valgray;
+                        elements[feIndex].SetNodes();
+                        elementsId++;
+                        feIndex++;
                     }
-                    else
-                    {
-                        //segmPixelData.Insert(i, (byte)pixelData[i]);
-                        //segmPixelData.Insert(i + 1, (byte)pixelData[i + 1]);
-                        segmPixelData.Insert(index, valgray);
-                    }
-                    index++;
+                    
                 }
-
-                Element[] elements = new Element[rows * colums];
-                int elementsId = sliceIndex * rows* colums;
-                //int nodesID = 0;
-
-                for (int i = 0; i < rows; i++)
-                {
-                    for (int j = 0; j < colums; j++)
-                    {
-                        double valgray = segmPixelData[rows * i + j];
-                        //valgray = slope * valgray + intercept;
-
-                        double half = window / 2.0;
-
-                        if (valgray <= level - half)
-                            valgray = 0;
-                        else if (valgray >= level + half)
-                            valgray = maxval;
-
-                        elements[rows * i + j] = new Element();
-                        var currentElement = elements[rows * i + j];
-
-                        currentElement.value = valgray;
-
-                        currentElement.sliceNumber = sliceIndex;
-
-                        currentElement.rowNumber = i;
-                        currentElement.columnNumber = j;
-                        currentElement.rowSpacing = rowSpacing;
-                        currentElement.columnSpacing = columnSpacing;
-                        currentElement.sliceThickness = sliceThickness;
-                        if (valgray != 0.0)
-                        {
-                            currentElement.FEid = elementsId;
-                            elementsId++;
-                            currentElement.SetNodes();
-                        }
-                    }
-                }
-
+                
                 sw.WriteLine("ET,1,SOLID185 ");
 
                 for (int i = 0; i < elements.Count(); i++)
@@ -146,7 +88,7 @@ namespace DicomViewer
                                 $"{elements[i].nodes[j].coordinates.y}," +
                                 $"{elements[i].nodes[j].coordinates.z},,,,");
                         }
-                        sw.WriteLine($"EN,{elements[i].FEid + 1}," +
+                        sw.WriteLine($"EN,{elements[i].feId + 1}," +
                             $"{elements[i].nodes[0].id + 1}," +
                             $"{elements[i].nodes[1].id + 1}," +
                             $"{elements[i].nodes[2].id + 1}," +
@@ -369,9 +311,34 @@ namespace DicomViewer
         }
     }
 
-    public class Element
+    public class FeModel
     {
-        public int FEid;
+        public int layersCount;
+
+        public List<FeLayer> layers = new List<FeLayer>();
+
+        public void WriteModel()
+        {
+
+        }
+
+        public class FeLayer
+        {
+            public int layerNumber;
+            public int elementsCount;
+
+            public List<FinateElement> elements = new List<FinateElement>();
+
+            public void WriteLayer(string dstFileName)
+            {
+
+            }
+        }
+    }
+
+    public class FinateElement
+    {
+        public int feId;
 
         public int sliceNumber;
 
@@ -391,16 +358,35 @@ namespace DicomViewer
             public double z;
         }
 
-        public Coords center = new Coords();
-
-        public struct Node
+        public class Node
         {
             public int id;
-            public int ElementId;
+            public int elementId;
+
             public Coords coordinates;
+
+            public Node(int elemId, int nodeId)
+            {
+                elementId = elemId;
+                id = nodeId;
+            }
         }
 
+        public Coords center = new Coords();
+
         public Node[] nodes = new Node[8];
+
+        public FinateElement(int id, int slice, int row, int column, double sliceThick, double rowSpace, double columnSpace)
+        {
+            feId = id;
+            sliceNumber = slice;
+            rowNumber = row;
+            columnNumber = column;
+            sliceThickness = sliceThick;
+            rowSpacing = rowSpace;
+            columnSpacing = columnSpace;
+            //value = srcValue;
+        }
 
         public void SetNodes()
         {
@@ -410,8 +396,9 @@ namespace DicomViewer
             
             for (int i=0;i<nodes.Count();i++)
             {
-                nodes[i].ElementId = FEid;
-                nodes[i].id = FEid * 8+i;
+                nodes[i] = new Node(feId, feId * 8 + i);
+                /*nodes[i].elementId = feId;
+                nodes[i].id = feId * 8+i;*/
             }
 
             nodes[0].coordinates.x = center.x - columnSpacing / 2;
