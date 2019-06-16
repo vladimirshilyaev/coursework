@@ -222,16 +222,38 @@ namespace DicomViewer
         {
             using (StreamWriter sw = File.CreateText(dstFileName))
             {
-                sw.WriteLine("/PREP7");
+                ApdlEnterPreprocessor(sw);
+
+                ApdlSetElementType(sw);
 
                 for (int i = 0; i < layersCount; i++)
                 {
-                    layers[i].ApdlCreateLayer(sw,srcFileNames[i], dstFileName, density);
+                    layers[i].ApdlCreateLayer(sw,srcFileNames[i], density);
                 }
 
-                sw.WriteLine("NUMMRG, NODE, , , , ");
-                sw.WriteLine("NUMCMP, NODE");
+                ApdlMergeNodes(sw);
+                ApdlCompressNodeNumbers(sw);
             }  
+        }
+
+        public void ApdlEnterPreprocessor (StreamWriter sw)
+        {
+            sw.WriteLine("/PREP7");
+        }
+
+        public void ApdlSetElementType(StreamWriter sw)
+        {
+            sw.WriteLine("ET,1,SOLID185 ");
+        }
+
+        public void ApdlMergeNodes (StreamWriter sw)
+        {
+            sw.WriteLine("NUMMRG, NODE, , , , ");
+        }
+
+        public void ApdlCompressNodeNumbers (StreamWriter sw)
+        {
+            sw.WriteLine("NUMCMP, NODE");
         }
 
         public class FeLayer
@@ -246,7 +268,7 @@ namespace DicomViewer
                 this.layerNumber = layerNumber;
             }
 
-            public void ApdlCreateLayer(StreamWriter sw,string srcFileName,string dstFileName, int density)
+            public void ApdlCreateLayer(StreamWriter sw,string srcFileName, int density)
             {
                 DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
 
@@ -255,19 +277,15 @@ namespace DicomViewer
                 elements = dcmWork.FinateElementsFromPixelData(segmPixelData, layerNumber);
                 
                 int elementsId = layerNumber * dcmWork.dcm.rows * dcmWork.dcm.columns;
-
-                sw.WriteLine("ET,1,SOLID185 ");
-
+                
                 for (int i = 0; i < elements.Count(); i++)
                 {
-
-                    elements[i].ApdlCreateElement(sw, dstFileName);
+                    elements[i].ApdlCreateElement(sw);
                 }
 
                 elementsCount = elements.Count();
             }
         }
-        
     }
 
     public class FinateElement
@@ -292,6 +310,8 @@ namespace DicomViewer
             public double z;
         }
 
+        public Coords center = new Coords();
+
         public class Node
         {
             public int id;
@@ -305,7 +325,7 @@ namespace DicomViewer
                 this.id = id;
             }
 
-            public void ApdlCreateNode (StreamWriter sw, string fileName)
+            public void ApdlCreateNode (StreamWriter sw)
             {
                 sw.WriteLine($"N,{ id + 1}," +
                              $"{coordinates.x}," +
@@ -313,8 +333,6 @@ namespace DicomViewer
                              $"{coordinates.z},,,,");
             }
         }
-
-        public Coords center = new Coords();
 
         public Node[] nodes = new Node[8];
 
@@ -376,11 +394,11 @@ namespace DicomViewer
             nodes[7].coordinates.z = center.z + sliceThickness / 2;
         }
 
-        public void ApdlCreateElement(StreamWriter sw, string fileName)
+        public void ApdlCreateElement(StreamWriter sw)
         {
             for (int i=0;i<nodes.Count();i++)
             {
-                nodes[i].ApdlCreateNode(sw, fileName);
+                nodes[i].ApdlCreateNode(sw);
             }
 
             sw.WriteLine($"EN,{feId + 1}," +
@@ -392,13 +410,6 @@ namespace DicomViewer
                             $"{nodes[5].id + 1}," +
                             $"{nodes[6].id + 1}," +
                             $"{nodes[7].id + 1}");
-        }
-
-        public void ApdlSetElementType(string fileName)
-        {
-            StreamWriter sw = new StreamWriter(fileName, true);
-            sw.WriteLine("ET,1,SOLID185 ");
-            sw.Close();
         }
     }
 
