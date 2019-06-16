@@ -37,70 +37,10 @@ namespace DicomViewer
 
         public void GenerateFEFile(string[] readFileNames, string writeFileName, int density)
         {
-            //StreamWriter sw = new StreamWriter(writeFileName);
             System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
-
-            using (StreamWriter sw = File.CreateText(writeFileName))
-            {
-                sw.WriteLine("/PREP7");
-            }
-
-            int sliceIndex = 0;
 
             FeModel Model = new FeModel(readFileNames.Count());
             Model.ApdlCreateModel(readFileNames, writeFileName, density);
-
-            /*for (; sliceIndex < readFileNames.Length;sliceIndex++)
-            {
-                DicomWorkshop dcmWork = new DicomWorkshop(readFileNames[sliceIndex]);
-
-                List<byte> segmPixelData = dcmWork.Segmentate(density);
-
-                List<FinateElement> elements = dcmWork.FinateElementsFromPixelData(segmPixelData, sliceIndex);
-
-               // List<FinateElement> elements = new List<FinateElement>();
-                //FinateElement[] elements = new FinateElement[dcmWork.dcm.rows * dcmWork.dcm.columns];
-                int elementsId = sliceIndex * dcmWork.dcm.rows * dcmWork.dcm.columns;
-                //int nodesID = 0;
-                
-                //int feIndex = 0;
-                
-                for (int i=0; i<segmPixelData.Count;i+=2)
-                {
-                    short gray = (short)((short)(segmPixelData[i]) + (short)(segmPixelData[i + 1] << 8));
-                    double valgray = gray;
-
-                    //valgray = dcmWork.dcm.slope * valgray + dcmWork.dcm.intercept;
-                    
-                    if (valgray!=0)
-                    {
-                        elements.Add(new FinateElement(elementsId, sliceIndex, (i/2) / dcmWork.dcm.rows, (i/2) % dcmWork.dcm.rows, dcmWork.dcm.sliceThickness,
-                        dcmWork.dcm.rowSpacing, dcmWork.dcm.columnSpacing,valgray));
-                       //elements[feIndex].value = valgray;
-                       //elements[feIndex].SetNodes();
-                        elementsId++;
-                        //feIndex++;
-                    }
-                    
-                }
-
-                using (StreamWriter sw = File.AppendText(writeFileName))
-                {
-                    sw.WriteLine("ET,1,SOLID185 ");
-                }
-                
-                for (int i = 0; i < 25; i++)
-                {
-                    
-                    elements[i].ApdlCreateElement(writeFileName);
-                }
-            }*/
-
-            using (StreamWriter sw = File.AppendText(writeFileName))
-            {
-                sw.WriteLine("NUMMRG, NODE, , , , ");
-                sw.WriteLine("NUMCMP, NODE");
-            }
         }
 
         public Image LoadSegmentedImage (string fileName, int density)
@@ -117,52 +57,7 @@ namespace DicomViewer
             return dcmWork.RgbaFromPixelData(dcmWork.dcm.pixelData);
         }
 
-        public Bitmap RgbaFromPixelData (List<byte> pixelData, int columns, int rows, int bitsStored, double slope, double intercept, double window, double level)
-        {
-            int index = 0;
-            byte[] outPixelData = new byte[rows * columns * 4];//rgba
-            double maxval = Math.Pow(2, bitsStored);
-
-            for (int i = 0; i < pixelData.Count; i += 2)
-            {
-                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i+1] << 8));
-                double valgray = gray;
-
-                valgray = slope * valgray + intercept;//modality lut
-
-                //This is  the window level algorithm
-                double half = window / 2.0;
-
-                if (valgray <= level - half)
-                    valgray = 0;
-                else if (valgray >= level + half)
-                    valgray = 255;
-                else
-                    valgray = ((valgray - (level - half)) / window) * 255;
-
-                outPixelData[index] = (byte)valgray;
-                outPixelData[index + 1] = (byte)valgray;
-                outPixelData[index + 2] = (byte)valgray;
-                outPixelData[index + 3] = 255;
-
-                index += 4;
-            }
-
-            return BmpFromRgba(outPixelData, columns, rows);
-        }
-
-        public Bitmap BmpFromRgba(byte[] arr, int width, int height)
-        {
-            var output = new Bitmap(width, height);
-            var rect = new Rectangle(0, 0, width, height);
-            var bmpData = output.LockBits(rect,
-                ImageLockMode.ReadWrite, output.PixelFormat);
-            var ptr = bmpData.Scan0;
-            Marshal.Copy(arr, 0, ptr, arr.Length);
-            output.UnlockBits(bmpData);
-            return output;
-        }
-
+        
         private void openButton_Click(object sender, EventArgs e)
         {
             // Show the Open File dialog. If the user clicks OK, load the
@@ -325,10 +220,18 @@ namespace DicomViewer
 
         public void ApdlCreateModel(string[] srcFileNames, string dstFileName, int density)
         {
-            for (int i=0;i<layersCount;i++)
+            using (StreamWriter sw = File.CreateText(dstFileName))
             {
-                layers[i].ApdlCreateLayer(srcFileNames[i], dstFileName, density);
-            }
+                sw.WriteLine("/PREP7");
+
+                for (int i = 0; i < layersCount; i++)
+                {
+                    layers[i].ApdlCreateLayer(sw,srcFileNames[i], dstFileName, density);
+                }
+
+                sw.WriteLine("NUMMRG, NODE, , , , ");
+                sw.WriteLine("NUMCMP, NODE");
+            }  
         }
 
         public class FeLayer
@@ -336,35 +239,32 @@ namespace DicomViewer
             public int layerNumber;
             public int elementsCount;
 
-            //public List<FinateElement> elements;
+            public List<FinateElement> elements;
 
             public FeLayer(int layerNumber)
             {
                 this.layerNumber = layerNumber;
             }
 
-            public void ApdlCreateLayer(string srcFileName,string dstFileName, int density)
+            public void ApdlCreateLayer(StreamWriter sw,string srcFileName,string dstFileName, int density)
             {
                 DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
 
                 List<byte> segmPixelData = dcmWork.Segmentate(density);
 
-                List<FinateElement> elements = dcmWork.FinateElementsFromPixelData(segmPixelData, layerNumber);
+                elements = dcmWork.FinateElementsFromPixelData(segmPixelData, layerNumber);
                 
                 int elementsId = layerNumber * dcmWork.dcm.rows * dcmWork.dcm.columns;
-                
 
-                using (StreamWriter sw = File.AppendText(dstFileName))
-                {
-                    sw.WriteLine("ET,1,SOLID185 ");
-                }
+                sw.WriteLine("ET,1,SOLID185 ");
 
-                for (int i = 0; i < 25; i++)
+                for (int i = 0; i < elements.Count(); i++)
                 {
 
-                    elements[i].ApdlCreateElement(dstFileName);
+                    elements[i].ApdlCreateElement(sw, dstFileName);
                 }
-            
+
+                elementsCount = elements.Count();
             }
         }
         
@@ -405,15 +305,12 @@ namespace DicomViewer
                 this.id = id;
             }
 
-            public void ApdlCreateNode (string fileName)
+            public void ApdlCreateNode (StreamWriter sw, string fileName)
             {
-                using (StreamWriter sw = File.AppendText(fileName))
-                {
-                    sw.WriteLine($"N,{ id + 1}," +
+                sw.WriteLine($"N,{ id + 1}," +
                              $"{coordinates.x}," +
                              $"{coordinates.y}," +
                              $"{coordinates.z},,,,");
-                }
             }
         }
 
@@ -479,24 +376,22 @@ namespace DicomViewer
             nodes[7].coordinates.z = center.z + sliceThickness / 2;
         }
 
-        public void ApdlCreateElement(string fileName)
+        public void ApdlCreateElement(StreamWriter sw, string fileName)
         {
             for (int i=0;i<nodes.Count();i++)
             {
-                nodes[i].ApdlCreateNode(fileName);
+                nodes[i].ApdlCreateNode(sw, fileName);
             }
-            using (StreamWriter sw = File.AppendText(fileName))
-            {
-                sw.WriteLine($"EN,{feId + 1}," +
-                                $"{nodes[0].id + 1}," +
-                                $"{nodes[1].id + 1}," +
-                                $"{nodes[2].id + 1}," +
-                                $"{nodes[3].id + 1}," +
-                                $"{nodes[4].id + 1}," +
-                                $"{nodes[5].id + 1}," +
-                                $"{nodes[6].id + 1}," +
-                                $"{nodes[7].id + 1}");
-            }
+
+            sw.WriteLine($"EN,{feId + 1}," +
+                            $"{nodes[0].id + 1}," +
+                            $"{nodes[1].id + 1}," +
+                            $"{nodes[2].id + 1}," +
+                            $"{nodes[3].id + 1}," +
+                            $"{nodes[4].id + 1}," +
+                            $"{nodes[5].id + 1}," +
+                            $"{nodes[6].id + 1}," +
+                            $"{nodes[7].id + 1}");
         }
 
         public void ApdlSetElementType(string fileName)
