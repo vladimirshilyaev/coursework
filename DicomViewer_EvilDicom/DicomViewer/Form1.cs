@@ -37,11 +37,18 @@ namespace DicomViewer
 
         public void GenerateFEFile(string[] readFileNames, string writeFileName, int density)
         {
-            StreamWriter sw = new StreamWriter(writeFileName);
+            //StreamWriter sw = new StreamWriter(writeFileName);
             System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
-            sw.WriteLine("/PREP7");
+
+            using (StreamWriter sw = File.CreateText(writeFileName))
+            {
+                sw.WriteLine("/PREP7");
+            }
 
             int sliceIndex = 0;
+
+            //FeModel Model = new FeModel(readFileNames.Count());
+            //Model.ApdlCreateModel(readFileNames, writeFileName, density);
 
             for (; sliceIndex < readFileNames.Length;sliceIndex++)
             {
@@ -49,62 +56,51 @@ namespace DicomViewer
 
                 List<byte> segmPixelData = dcmWork.Segmentate(density);
 
-                List<FinateElement> elements = new List<FinateElement>(/*dcmWork.dcm.rows*dcmWork.dcm.columns*/);
+                List<FinateElement> elements = dcmWork.FinateElementsFromPixelData(segmPixelData, sliceIndex);
+
+               // List<FinateElement> elements = new List<FinateElement>();
                 //FinateElement[] elements = new FinateElement[dcmWork.dcm.rows * dcmWork.dcm.columns];
                 int elementsId = sliceIndex * dcmWork.dcm.rows * dcmWork.dcm.columns;
                 //int nodesID = 0;
-                int feIndex = 0;
-
-                for (int i=0; i<segmPixelData.Count;i+=2)
+                
+                //int feIndex = 0;
+                
+                /*for (int i=0; i<segmPixelData.Count;i+=2)
                 {
                     short gray = (short)((short)(segmPixelData[i]) + (short)(segmPixelData[i + 1] << 8));
                     double valgray = gray;
 
                     //valgray = dcmWork.dcm.slope * valgray + dcmWork.dcm.intercept;
-
                     
                     if (valgray!=0)
                     {
                         elements.Add(new FinateElement(elementsId, sliceIndex, (i/2) / dcmWork.dcm.rows, (i/2) % dcmWork.dcm.rows, dcmWork.dcm.sliceThickness,
-                        dcmWork.dcm.rowSpacing, dcmWork.dcm.columnSpacing));
-                        elements[feIndex].value = valgray;
-                        elements[feIndex].SetNodes();
+                        dcmWork.dcm.rowSpacing, dcmWork.dcm.columnSpacing,valgray));
+                       //elements[feIndex].value = valgray;
+                       //elements[feIndex].SetNodes();
                         elementsId++;
-                        feIndex++;
+                        //feIndex++;
                     }
                     
+                }*/
+
+                using (StreamWriter sw = File.AppendText(writeFileName))
+                {
+                    sw.WriteLine("ET,1,SOLID185 ");
                 }
                 
-                sw.WriteLine("ET,1,SOLID185 ");
-
-                for (int i = 0; i < elements.Count(); i++)
+                for (int i = 0; i < 25; i++)
                 {
-                    if (elements[i].value != 0.0)
-                    {
-                        for (int j = 0; j < elements[i].nodes.Count(); j++)
-                        {
-                            sw.WriteLine($"N,{ elements[i].nodes[j].id + 1}," +
-                                $"{elements[i].nodes[j].coordinates.x}," +
-                                $"{elements[i].nodes[j].coordinates.y}," +
-                                $"{elements[i].nodes[j].coordinates.z},,,,");
-                        }
-                        sw.WriteLine($"EN,{elements[i].feId + 1}," +
-                            $"{elements[i].nodes[0].id + 1}," +
-                            $"{elements[i].nodes[1].id + 1}," +
-                            $"{elements[i].nodes[2].id + 1}," +
-                            $"{elements[i].nodes[3].id + 1}," +
-                            $"{elements[i].nodes[4].id + 1}," +
-                            $"{elements[i].nodes[5].id + 1}," +
-                            $"{elements[i].nodes[6].id + 1}," +
-                            $"{elements[i].nodes[7].id + 1}");
-                    }
+                    
+                    elements[i].ApdlCreateElement(writeFileName);
                 }
             }
 
-            sw.WriteLine("NUMMRG, NODE, , , , ");
-            sw.WriteLine("NUMCMP, NODE");
-
-            sw.Close();
+            using (StreamWriter sw = File.AppendText(writeFileName))
+            {
+                sw.WriteLine("NUMMRG, NODE, , , , ");
+                sw.WriteLine("NUMCMP, NODE");
+            }
         }
 
         public Image LoadSegmentedImage (string fileName, int density)
@@ -317,9 +313,22 @@ namespace DicomViewer
 
         public List<FeLayer> layers = new List<FeLayer>();
 
-        public void WriteModel()
+        public FeModel( int layersCount)
         {
+            this.layersCount = layersCount;
 
+            for (int i=0; i<layersCount;i++)
+            {
+                layers.Add(new FeLayer(i));
+            }
+        }
+
+        public void ApdlCreateModel(string[] srcFileNames, string dstFileName, int density)
+        {
+            for (int i=0;i<srcFileNames.Count();i++)
+            {
+                layers[i].ApdlCreateLayer(dstFileName, density);
+            }
         }
 
         public class FeLayer
@@ -327,11 +336,76 @@ namespace DicomViewer
             public int layerNumber;
             public int elementsCount;
 
-            public List<FinateElement> elements = new List<FinateElement>();
+            public List<FinateElement> elements;
 
-            public void WriteLayer(string dstFileName)
+            public FeLayer(int layerNumber)
             {
+                this.layerNumber = layerNumber;
+            }
 
+            public void ApdlCreateLayer(string fileName, int density)
+            {
+                DicomWorkshop dcmWork = new DicomWorkshop(fileName);
+
+                List<byte> segmPixelData = dcmWork.Segmentate(density);
+
+                elements = dcmWork.FinateElementsFromPixelData(segmPixelData, layerNumber);
+
+                elementsCount = elements.Count();
+                /*List<FinateElement> elements = new List<FinateElement>();
+                //FinateElement[] elements = new FinateElement[dcmWork.dcm.rows * dcmWork.dcm.columns];
+                int elementsId = sliceIndex * dcmWork.dcm.rows * dcmWork.dcm.columns;
+                //int nodesID = 0;
+                
+                //int feIndex = 0;
+
+                for (int i=0; i<segmPixelData.Count;i+=2)
+                {
+                    short gray = (short)((short)(segmPixelData[i]) + (short)(segmPixelData[i + 1] << 8));
+                    double valgray = gray;
+
+                    //valgray = dcmWork.dcm.slope * valgray + dcmWork.dcm.intercept;
+                    
+                    if (valgray!=0)
+                    {
+                        elements.Add(new FinateElement(elementsId, sliceIndex, (i/2) / dcmWork.dcm.rows, (i/2) % dcmWork.dcm.rows, dcmWork.dcm.sliceThickness,
+                        dcmWork.dcm.rowSpacing, dcmWork.dcm.columnSpacing,valgray));
+                       //elements[feIndex].value = valgray;
+                       //elements[feIndex].SetNodes();
+                        elementsId++;
+                        //feIndex++;
+                    }
+                    
+                }*/
+
+                using (StreamWriter sw = File.AppendText(fileName))
+                {
+                    sw.WriteLine("ET,1,SOLID185 ");
+                }
+
+                for (int i = 0; i < 25; i++)
+                {
+                    /*if (elements[i].value != 0.0)
+                    {
+                        for (int j = 0; j < elements[i].nodes.Count(); j++)
+                        {
+                            sw.WriteLine($"N,{ elements[i].nodes[j].id + 1}," +
+                                $"{elements[i].nodes[j].coordinates.x}," +
+                                $"{elements[i].nodes[j].coordinates.y}," +
+                                $"{elements[i].nodes[j].coordinates.z},,,,");
+                        }
+                        sw.WriteLine($"EN,{elements[i].feId + 1}," +
+                            $"{elements[i].nodes[0].id + 1}," +
+                            $"{elements[i].nodes[1].id + 1}," +
+                            $"{elements[i].nodes[2].id + 1}," +
+                            $"{elements[i].nodes[3].id + 1}," +
+                            $"{elements[i].nodes[4].id + 1}," +
+                            $"{elements[i].nodes[5].id + 1}," +
+                            $"{elements[i].nodes[6].id + 1}," +
+                            $"{elements[i].nodes[7].id + 1}");
+                    }*/
+                    elements[i].ApdlCreateElement(fileName);
+                }
             }
         }
     }
@@ -365,10 +439,21 @@ namespace DicomViewer
 
             public Coords coordinates;
 
-            public Node(int elemId, int nodeId)
+            public Node(int elementId, int id)
             {
-                elementId = elemId;
-                id = nodeId;
+                this.elementId = elementId;
+                this.id = id;
+            }
+
+            public void ApdlCreateNode (string fileName)
+            {
+                using (StreamWriter sw = File.AppendText(fileName))
+                {
+                    sw.WriteLine($"N,{ id + 1}," +
+                             $"{coordinates.x}," +
+                             $"{coordinates.y}," +
+                             $"{coordinates.z},,,,");
+                }
             }
         }
 
@@ -376,16 +461,18 @@ namespace DicomViewer
 
         public Node[] nodes = new Node[8];
 
-        public FinateElement(int id, int slice, int row, int column, double sliceThick, double rowSpace, double columnSpace)
+        public FinateElement(int feId, int sliceNumber, int rowNumber, int columnNumber, double sliceThickness, double rowSpacing, double columnSpacing, double value)
         {
-            feId = id;
-            sliceNumber = slice;
-            rowNumber = row;
-            columnNumber = column;
-            sliceThickness = sliceThick;
-            rowSpacing = rowSpace;
-            columnSpacing = columnSpace;
-            //value = srcValue;
+            this.feId = feId;
+            this.sliceNumber = sliceNumber;
+            this.rowNumber = rowNumber;
+            this.columnNumber = columnNumber;
+            this.sliceThickness = sliceThickness;
+            this.rowSpacing = rowSpacing;
+            this.columnSpacing = columnSpacing;
+            this.value = value;
+
+            SetNodes();
         }
 
         public void SetNodes()
@@ -397,8 +484,6 @@ namespace DicomViewer
             for (int i=0;i<nodes.Count();i++)
             {
                 nodes[i] = new Node(feId, feId * 8 + i);
-                /*nodes[i].elementId = feId;
-                nodes[i].id = feId * 8+i;*/
             }
 
             nodes[0].coordinates.x = center.x - columnSpacing / 2;
@@ -432,6 +517,33 @@ namespace DicomViewer
             nodes[7].coordinates.x = center.x - columnSpacing / 2;
             nodes[7].coordinates.y = center.y + rowSpacing / 2;
             nodes[7].coordinates.z = center.z + sliceThickness / 2;
+        }
+
+        public void ApdlCreateElement(string fileName)
+        {
+            for (int i=0;i<nodes.Count();i++)
+            {
+                nodes[i].ApdlCreateNode(fileName);
+            }
+            using (StreamWriter sw = File.AppendText(fileName))
+            {
+                sw.WriteLine($"EN,{feId + 1}," +
+                                $"{nodes[0].id + 1}," +
+                                $"{nodes[1].id + 1}," +
+                                $"{nodes[2].id + 1}," +
+                                $"{nodes[3].id + 1}," +
+                                $"{nodes[4].id + 1}," +
+                                $"{nodes[5].id + 1}," +
+                                $"{nodes[6].id + 1}," +
+                                $"{nodes[7].id + 1}");
+            }
+        }
+
+        public void ApdlSetElementType(string fileName)
+        {
+            StreamWriter sw = new StreamWriter(fileName, true);
+            sw.WriteLine("ET,1,SOLID185 ");
+            sw.Close();
         }
     }
 
@@ -579,6 +691,27 @@ namespace DicomViewer
             List<byte> filteredPixels = new List<byte>(dstBytes);
 
             return filteredPixels;
+        }
+
+        public List<FinateElement> FinateElementsFromPixelData (List<byte> pixelData, int sliceIndex)
+        {
+            List<FinateElement> elements = new List<FinateElement>();
+            int elementsId = sliceIndex * dcm.rows *dcm.columns;
+
+            for (int i = 0; i < pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                if (valgray != 0)
+                {
+                    elements.Add(new FinateElement(elementsId, sliceIndex, (i / 2) / dcm.rows, (i / 2) % dcm.rows, dcm.sliceThickness,
+                    dcm.rowSpacing, dcm.columnSpacing, valgray));
+                  
+                    elementsId++;
+                }
+            }
+            return elements;
         }
 
     }
