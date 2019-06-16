@@ -35,12 +35,12 @@ namespace DicomViewer
             return dcmWork.RgbaFromPixelData(filteredPixels);
         }
 
-        public void GenerateFEFile(string[] readFileNames, string writeFileName, int density)
+        public void GenerateFEFile(string[] readFileNames, string writeFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
         {
             System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 
             FeModel Model = new FeModel(readFileNames.Count());
-            Model.ApdlCreateModel(readFileNames, writeFileName, density);
+            Model.ApdlCreateModel(readFileNames, writeFileName, density, diameter, sigmaColor, sigmaSpace);
         }
 
         public Image LoadSegmentedImage (string fileName, int density)
@@ -192,7 +192,7 @@ namespace DicomViewer
                 CurrentDensityTextBox.Enabled = true;
                 if (saveFileDialog1.ShowDialog() == DialogResult.OK)
                     //GenerateFEFile(openFileDialog1.FileNames[trackBar1.Value - 1], saveFileDialog1.FileName, trackBar2.Value);  
-                    GenerateFEFile(openFileDialog1.FileNames, saveFileDialog1.FileName, trackBar2.Value);
+                    GenerateFEFile(openFileDialog1.FileNames, saveFileDialog1.FileName, trackBar2.Value, Int32.Parse(DiameterTextBox.Text), Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
             }
         }
 
@@ -218,7 +218,7 @@ namespace DicomViewer
             }
         }
 
-        public void ApdlCreateModel(string[] srcFileNames, string dstFileName, int density)
+        public void ApdlCreateModel(string[] srcFileNames, string dstFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
         {
             using (StreamWriter sw = File.CreateText(dstFileName))
             {
@@ -228,7 +228,7 @@ namespace DicomViewer
 
                 for (int i = 0; i < layersCount; i++)
                 {
-                    layers[i].ApdlCreateLayer(sw,srcFileNames[i], density);
+                    layers[i].ApdlCreateLayer(sw,srcFileNames[i], density,diameter,sigmaColor,sigmaSpace);
                 }
 
                 ApdlMergeNodes(sw);
@@ -268,13 +268,15 @@ namespace DicomViewer
                 this.layerNumber = layerNumber;
             }
 
-            public void ApdlCreateLayer(StreamWriter sw,string srcFileName, int density)
+            public void ApdlCreateLayer(StreamWriter sw,string srcFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
             {
                 DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
 
                 List<byte> segmPixelData = dcmWork.Segmentate(density);
 
-                elements = dcmWork.FinateElementsFromPixelData(segmPixelData, layerNumber);
+                List<byte> filteredPixelData = dcmWork.BilateralFilter(segmPixelData, diameter, sigmaColor, sigmaSpace);
+
+                elements = dcmWork.FinateElementsFromPixelData(filteredPixelData, layerNumber);
                 
                 int elementsId = layerNumber * dcmWork.dcm.rows * dcmWork.dcm.columns;
                 
