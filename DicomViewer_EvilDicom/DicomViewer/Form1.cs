@@ -47,10 +47,10 @@ namespace DicomViewer
 
             int sliceIndex = 0;
 
-            //FeModel Model = new FeModel(readFileNames.Count());
-            //Model.ApdlCreateModel(readFileNames, writeFileName, density);
+            FeModel Model = new FeModel(readFileNames.Count());
+            Model.ApdlCreateModel(readFileNames, writeFileName, density);
 
-            for (; sliceIndex < readFileNames.Length;sliceIndex++)
+            /*for (; sliceIndex < readFileNames.Length;sliceIndex++)
             {
                 DicomWorkshop dcmWork = new DicomWorkshop(readFileNames[sliceIndex]);
 
@@ -65,7 +65,7 @@ namespace DicomViewer
                 
                 //int feIndex = 0;
                 
-                /*for (int i=0; i<segmPixelData.Count;i+=2)
+                for (int i=0; i<segmPixelData.Count;i+=2)
                 {
                     short gray = (short)((short)(segmPixelData[i]) + (short)(segmPixelData[i + 1] << 8));
                     double valgray = gray;
@@ -82,7 +82,7 @@ namespace DicomViewer
                         //feIndex++;
                     }
                     
-                }*/
+                }
 
                 using (StreamWriter sw = File.AppendText(writeFileName))
                 {
@@ -94,7 +94,7 @@ namespace DicomViewer
                     
                     elements[i].ApdlCreateElement(writeFileName);
                 }
-            }
+            }*/
 
             using (StreamWriter sw = File.AppendText(writeFileName))
             {
@@ -313,7 +313,7 @@ namespace DicomViewer
 
         public List<FeLayer> layers = new List<FeLayer>();
 
-        public FeModel( int layersCount)
+        public FeModel(int layersCount)
         {
             this.layersCount = layersCount;
 
@@ -325,9 +325,9 @@ namespace DicomViewer
 
         public void ApdlCreateModel(string[] srcFileNames, string dstFileName, int density)
         {
-            for (int i=0;i<srcFileNames.Count();i++)
+            for (int i=0;i<layersCount;i++)
             {
-                layers[i].ApdlCreateLayer(dstFileName, density);
+                layers[i].ApdlCreateLayer(srcFileNames[i], dstFileName, density);
             }
         }
 
@@ -336,78 +336,38 @@ namespace DicomViewer
             public int layerNumber;
             public int elementsCount;
 
-            public List<FinateElement> elements;
+            //public List<FinateElement> elements;
 
             public FeLayer(int layerNumber)
             {
                 this.layerNumber = layerNumber;
             }
 
-            public void ApdlCreateLayer(string fileName, int density)
+            public void ApdlCreateLayer(string srcFileName,string dstFileName, int density)
             {
-                DicomWorkshop dcmWork = new DicomWorkshop(fileName);
+                DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
 
                 List<byte> segmPixelData = dcmWork.Segmentate(density);
 
-                elements = dcmWork.FinateElementsFromPixelData(segmPixelData, layerNumber);
-
-                elementsCount = elements.Count();
-                /*List<FinateElement> elements = new List<FinateElement>();
-                //FinateElement[] elements = new FinateElement[dcmWork.dcm.rows * dcmWork.dcm.columns];
-                int elementsId = sliceIndex * dcmWork.dcm.rows * dcmWork.dcm.columns;
-                //int nodesID = 0;
+                List<FinateElement> elements = dcmWork.FinateElementsFromPixelData(segmPixelData, layerNumber);
                 
-                //int feIndex = 0;
+                int elementsId = layerNumber * dcmWork.dcm.rows * dcmWork.dcm.columns;
+                
 
-                for (int i=0; i<segmPixelData.Count;i+=2)
-                {
-                    short gray = (short)((short)(segmPixelData[i]) + (short)(segmPixelData[i + 1] << 8));
-                    double valgray = gray;
-
-                    //valgray = dcmWork.dcm.slope * valgray + dcmWork.dcm.intercept;
-                    
-                    if (valgray!=0)
-                    {
-                        elements.Add(new FinateElement(elementsId, sliceIndex, (i/2) / dcmWork.dcm.rows, (i/2) % dcmWork.dcm.rows, dcmWork.dcm.sliceThickness,
-                        dcmWork.dcm.rowSpacing, dcmWork.dcm.columnSpacing,valgray));
-                       //elements[feIndex].value = valgray;
-                       //elements[feIndex].SetNodes();
-                        elementsId++;
-                        //feIndex++;
-                    }
-                    
-                }*/
-
-                using (StreamWriter sw = File.AppendText(fileName))
+                using (StreamWriter sw = File.AppendText(dstFileName))
                 {
                     sw.WriteLine("ET,1,SOLID185 ");
                 }
 
                 for (int i = 0; i < 25; i++)
                 {
-                    /*if (elements[i].value != 0.0)
-                    {
-                        for (int j = 0; j < elements[i].nodes.Count(); j++)
-                        {
-                            sw.WriteLine($"N,{ elements[i].nodes[j].id + 1}," +
-                                $"{elements[i].nodes[j].coordinates.x}," +
-                                $"{elements[i].nodes[j].coordinates.y}," +
-                                $"{elements[i].nodes[j].coordinates.z},,,,");
-                        }
-                        sw.WriteLine($"EN,{elements[i].feId + 1}," +
-                            $"{elements[i].nodes[0].id + 1}," +
-                            $"{elements[i].nodes[1].id + 1}," +
-                            $"{elements[i].nodes[2].id + 1}," +
-                            $"{elements[i].nodes[3].id + 1}," +
-                            $"{elements[i].nodes[4].id + 1}," +
-                            $"{elements[i].nodes[5].id + 1}," +
-                            $"{elements[i].nodes[6].id + 1}," +
-                            $"{elements[i].nodes[7].id + 1}");
-                    }*/
-                    elements[i].ApdlCreateElement(fileName);
+
+                    elements[i].ApdlCreateElement(dstFileName);
                 }
+            
             }
         }
+        
     }
 
     public class FinateElement
