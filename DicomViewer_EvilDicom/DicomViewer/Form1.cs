@@ -41,6 +41,9 @@ namespace DicomViewer
 
             FeModel Model = new FeModel(readFileNames.Count());
             Model.ApdlCreateModel(readFileNames, writeFileName, density, diameter, sigmaColor, sigmaSpace);
+
+            //SolidModel Model = new SolidModel(readFileNames.Count());
+            //Model.ApdlCreateSolidModel(readFileNames, writeFileName, density, diameter, sigmaColor, sigmaSpace);
         }
 
         public Image LoadSegmentedImage (string fileName, int density)
@@ -199,6 +202,153 @@ namespace DicomViewer
         private void FilterButton_Click(object sender, EventArgs e)
         {
             pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[trackBar1.Value - 1],trackBar2.Value,Int32.Parse(DiameterTextBox.Text) , Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
+        }
+    }
+
+    public class SolidModel
+    {
+        public int layersCount;
+
+        public List<SolidLayer> layers = new List<SolidLayer>();
+
+        public SolidModel(int layersCount)
+        {
+            this.layersCount = layersCount;
+
+            for (int i = 0; i < layersCount; i++)
+            {
+                layers.Add(new SolidLayer(i));
+            }
+        }
+
+        public void ApdlCreateSolidModel(string[] srcFileNames, string dstFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
+        {
+            using (StreamWriter sw = File.CreateText(dstFileName))
+            {
+                ApdlEnterPreprocessor(sw);
+
+                //ApdlSetElementType(sw);
+
+                for (int i = 0; i < layersCount; i++)
+                {
+                    layers[i].ApdlCreateSolidLayer(sw, srcFileNames[i], density, diameter, sigmaColor, sigmaSpace);
+                }
+
+                ApdlBooleanAddition(sw);
+
+                ApdlMergeKP(sw);
+                //ApdlCompressNodeNumbers(sw);
+            }
+        }
+
+        public void ApdlEnterPreprocessor(StreamWriter sw)
+        {
+            sw.WriteLine("/PREP7");
+        }
+
+        public void ApdlBooleanAddition(StreamWriter sw)
+        {
+            sw.WriteLine("VADD,ALL,,,,,,,,");
+        }
+
+        public void ApdlMergeKP(StreamWriter sw)
+        {
+            sw.WriteLine("NUMMRG, KP, , , , ");
+        }
+
+
+
+        public class SolidLayer
+        {
+            public int layerNumber;
+            public int volumesCount;
+
+            public List<Block> blocks;
+
+            public SolidLayer(int layerNumber)
+            {
+                this.layerNumber = layerNumber;
+            }
+
+            public void ApdlCreateSolidLayer(StreamWriter sw, string srcFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
+            {
+                DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
+
+                List<byte> segmPixelData = dcmWork.Segmentate(density);
+
+                List<byte> filteredPixelData = dcmWork.BilateralFilter(segmPixelData, diameter, sigmaColor, sigmaSpace);
+
+                blocks = dcmWork.BlocksFromPixelData(filteredPixelData, layerNumber);
+
+                int elementsId = layerNumber * dcmWork.dcm.rows * dcmWork.dcm.columns;
+
+                for (int i = 0; i < blocks.Count(); i++)
+                {
+                    blocks[i].ApdlCreateBlock(sw);
+                    //ApdlBooleanAddition(sw);
+                }
+
+                volumesCount = blocks.Count();
+            }
+
+            
+
+
+        }
+
+        public class Block
+        {
+            public int blockId;
+
+            public int sliceNumber;
+
+            public int rowNumber;
+            public int columnNumber;
+
+            public double rowSpacing;
+            public double columnSpacing;
+            public double sliceThickness;
+
+            public double value;
+
+            public struct Coords
+            {
+                public double x;
+                public double y;
+                public double z;
+            }
+
+            public Coords center = new Coords();
+
+            public Block(int blockId, int sliceNumber, int rowNumber, int columnNumber, double sliceThickness, double rowSpacing, double columnSpacing, double value)
+            {
+                this.blockId = blockId;
+                this.sliceNumber = sliceNumber;
+                this.rowNumber = rowNumber;
+                this.columnNumber = columnNumber;
+                this.sliceThickness = sliceThickness;
+                this.rowSpacing = rowSpacing;
+                this.columnSpacing = columnSpacing;
+                this.value = value;
+
+                SetBlock();
+            }
+
+            public void SetBlock()
+            {
+                center.x = columnSpacing / 2 + columnNumber * columnSpacing;
+                center.y = -rowSpacing / 2 - rowNumber * rowSpacing;
+                center.z = sliceThickness / 2 + sliceNumber * sliceThickness;
+            }
+
+            public void ApdlCreateBlock(StreamWriter sw)
+            {
+                sw.WriteLine($"BLC5,{center.x}," +
+                                $"{center.y}," +
+                                $"{columnSpacing}," +
+                                $"{rowSpacing}," +
+                                $"{sliceThickness}");
+            }
         }
     }
 
@@ -582,6 +732,26 @@ namespace DicomViewer
             return elements;
         }
 
+        public List<SolidModel.Block> BlocksFromPixelData(List<byte> pixelData, int sliceIndex)
+        {
+            List<SolidModel.Block> blocks = new List<SolidModel.Block>();
+            int blocksId = sliceIndex * dcm.rows * dcm.columns;
+
+            for (int i = 0; i < pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                if (valgray != 0)
+                {
+                    blocks.Add(new SolidModel.Block(blocksId, sliceIndex, (i / 2) / dcm.rows, (i / 2) % dcm.rows, dcm.sliceThickness,
+                    dcm.rowSpacing, dcm.columnSpacing, valgray));
+
+                    blocksId++;
+                }
+            }
+            return blocks;
+        }
     }
     
 }
