@@ -721,7 +721,11 @@ namespace DicomViewer
                 short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
                 double valgray = gray;
 
-                if (valgray != 0)
+                valgray = dcm.slope * valgray + dcm.intercept;
+
+                double half = dcm.window / 2.0;
+
+                if (valgray > dcm.level-half)
                 {
                     elements.Add(new FinateElement(elementsId, sliceIndex, (i / 2) / dcm.rows, (i / 2) % dcm.rows, dcm.sliceThickness,
                     dcm.rowSpacing, dcm.columnSpacing, valgray));
