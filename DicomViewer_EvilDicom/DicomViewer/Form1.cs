@@ -69,12 +69,11 @@ namespace DicomViewer
             {
                 var dcm = DICOMObject.Read(openFileDialog1.FileNames[0]);
       
-                trackBar1.Enabled = true;
-                trackBar1.Maximum = openFileDialog1.FileNames.Length;
-                trackBar1.Minimum = 1;
+                SliceTrackBar.Enabled = true;
+                SliceTrackBar.Maximum = openFileDialog1.FileNames.Length;
+                SliceTrackBar.Minimum = 1;
 
-                MinSliceLabel.Text = Convert.ToString(1);
-                MinSliceLabel.Visible = true;
+                
 
                 MaxSliceLabel.Text = Convert.ToString(openFileDialog1.FileNames.Length);
                 MaxSliceLabel.Visible = true;
@@ -82,15 +81,14 @@ namespace DicomViewer
 
                 double window = (double)dcm.FindFirst(TagHelper.WindowWidth).DData;
                 double level = (double)dcm.FindFirst(TagHelper.WindowCenter).DData;
-                trackBar2.Minimum = Convert.ToInt32(level - window/2);
-                trackBar2.Maximum = Convert.ToInt32(level + window/2);
-                trackBar2.Enabled = true;
-                trackBar2.Value = trackBar2.Minimum;
+                MinLevelTrackBar.Minimum = Convert.ToInt32(level - window/2);
+                MinLevelTrackBar.Maximum = Convert.ToInt32(level + window/2);
+                MinLevelTrackBar.Enabled = true;
+                MinLevelTrackBar.Value = MinLevelTrackBar.Minimum;
 
-                MinDensityLabel.Text = Convert.ToString(trackBar2.Minimum);
-                MinDensityLabel.Visible = true;
+              
 
-                MaxDensityLabel.Text = Convert.ToString(trackBar2.Maximum);
+                MaxDensityLabel.Text = Convert.ToString(MinLevelTrackBar.Maximum);
                 MaxDensityLabel.Visible = true;
 
                 SegmentateCheckBox.Enabled = true;
@@ -99,18 +97,18 @@ namespace DicomViewer
 
                 //SaveButton.Enabled = true;
 
-                pictureBox1.Image = LoadImage(openFileDialog1.FileNames[trackBar1.Value - 1]);
+                pictureBox1.Image = LoadImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1]);
             }
         }
 
-        private void trackBar1_Scroll(object sender, EventArgs e)
+        private void SliceTrackBar_Scroll(object sender, EventArgs e)
         {
-            pictureBox1.Image = LoadImage(openFileDialog1.FileNames[trackBar1.Value - 1]);
-            CurrentSliceTextbox.Text = Convert.ToString(trackBar1.Value);
+            pictureBox1.Image = LoadImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1]);
+            CurrentSliceTextbox.Text = Convert.ToString(SliceTrackBar.Value);
 
             if (SegmentateCheckBox.Checked == true)
             {
-                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value - 1);
+                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value - 1);
             }
         }
 
@@ -119,27 +117,25 @@ namespace DicomViewer
             pictureBox1.Image = null;
             pictureBox2.Image = null;
 
-            trackBar1.Enabled = false;
-            trackBar1.Minimum = 1;
-            trackBar1.Maximum = 10;
-            trackBar1.Value = 1;
+            SliceTrackBar.Enabled = false;
+            SliceTrackBar.Minimum = 1;
+            SliceTrackBar.Maximum = 10;
+            SliceTrackBar.Value = 1;
 
             CurrentSliceTextbox.Text = null;
             CurrentSliceTextbox.Enabled = false;
 
-            MinSliceLabel.Visible = false;
-            MaxSliceLabel.Visible = false;
+            
 
-            trackBar2.Enabled = false;
-            trackBar2.Minimum = 1;
-            trackBar2.Maximum = 10;
-            trackBar2.Value = 1;
+            MinLevelTrackBar.Enabled = false;
+            MinLevelTrackBar.Minimum = 1;
+            MinLevelTrackBar.Maximum = 10;
+            MinLevelTrackBar.Value = 1;
 
-            CurrentDensityTextBox.Text = null;
-            CurrentDensityTextBox.Enabled = false;
+            MinLevelTextBox.Text = null;
+            MinLevelTextBox.Enabled = false;
 
-            MinDensityLabel.Visible = false;
-            MaxDensityLabel.Visible = false;
+           
 
             SegmentateCheckBox.Enabled = false;
             SegmentateCheckBox.Checked = false;
@@ -160,7 +156,7 @@ namespace DicomViewer
             if (SegmentateCheckBox.Checked == true)
             {
                 //pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
-                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
+                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value);
 
                 /*CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
                 CurrentDensityTextBox.Enabled = true;
@@ -172,14 +168,14 @@ namespace DicomViewer
                 pictureBox2.Image = null;
         }
 
-        private void trackBar2_Scroll(object sender, EventArgs e)
+        private void MinLevelTrackBar_Scroll(object sender, EventArgs e)
         {
             if (SegmentateCheckBox.Checked == true)
             {
-                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[trackBar1.Value - 1], trackBar2.Value);
+                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value);
                 
             }
-            CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
+            MinLevelTextBox.Text = Convert.ToString(MinLevelTrackBar.Value);
         }
 
         private void SaveButton_Click(object sender, EventArgs e)
@@ -191,17 +187,47 @@ namespace DicomViewer
         {
             if (SegmentateCheckBox.Checked == true)
             {
-                CurrentDensityTextBox.Text = Convert.ToString(trackBar2.Value);
-                CurrentDensityTextBox.Enabled = true;
+                MinLevelTextBox.Text = Convert.ToString(MinLevelTrackBar.Value);
+                MinLevelTextBox.Enabled = true;
                 if (saveFileDialog1.ShowDialog() == DialogResult.OK)
                     //GenerateFEFile(openFileDialog1.FileNames[trackBar1.Value - 1], saveFileDialog1.FileName, trackBar2.Value);  
-                    GenerateFEFile(openFileDialog1.FileNames, saveFileDialog1.FileName, trackBar2.Value, Int32.Parse(DiameterTextBox.Text), Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
+                    GenerateFEFile(openFileDialog1.FileNames, saveFileDialog1.FileName, MinLevelTrackBar.Value, Int32.Parse(DiameterTextBox.Text), Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
             }
         }
 
         private void FilterButton_Click(object sender, EventArgs e)
         {
-            pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[trackBar1.Value - 1],trackBar2.Value,Int32.Parse(DiameterTextBox.Text) , Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
+            pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1],MinLevelTrackBar.Value,Int32.Parse(DiameterTextBox.Text) , Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
+        }
+
+        private void FilterCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void DefaultWindowButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void MaxLevelTrackBar_Scroll(object sender, EventArgs e)
+        {
+
+        }
+
+        private void DiameterTrackBar_Scroll(object sender, EventArgs e)
+        {
+
+        }
+
+        private void SigmaColorTrackBar_Scroll(object sender, EventArgs e)
+        {
+
+        }
+
+        private void SigmaSpaceTrackBar_Scroll(object sender, EventArgs e)
+        {
+
         }
     }
 
