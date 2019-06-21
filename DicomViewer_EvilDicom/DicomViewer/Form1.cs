@@ -725,7 +725,7 @@ namespace DicomViewer
 
                 double half = dcm.window / 2.0;
 
-                if (valgray > dcm.level-half)
+                if (valgray > dcm.level+half)
                 {
                     elements.Add(new FinateElement(elementsId, sliceIndex, (i / 2) / dcm.rows, (i / 2) % dcm.rows, dcm.sliceThickness,
                     dcm.rowSpacing, dcm.columnSpacing, valgray));
