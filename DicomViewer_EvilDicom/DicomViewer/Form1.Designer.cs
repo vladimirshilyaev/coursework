@@ -47,6 +47,9 @@
             this.MaxLevelTextBox = new System.Windows.Forms.TextBox();
             this.MaxLevelTrackBar = new System.Windows.Forms.TrackBar();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.FromSliceTextBox = new System.Windows.Forms.TextBox();
+            this.FromSliceLabel = new System.Windows.Forms.Label();
+            this.FromSliceTrackBar = new System.Windows.Forms.TrackBar();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.panel5 = new System.Windows.Forms.Panel();
             this.DiameterTextBox = new System.Windows.Forms.TextBox();
@@ -57,10 +60,13 @@
             this.SigmaColorLabel = new System.Windows.Forms.Label();
             this.SigmaColorTrackBar = new System.Windows.Forms.TrackBar();
             this.panel7 = new System.Windows.Forms.Panel();
+            this.ToSliceTextBox = new System.Windows.Forms.TextBox();
+            this.ToSliceLabel = new System.Windows.Forms.Label();
+            this.ToSliceTrackBar = new System.Windows.Forms.TrackBar();
             this.panel8 = new System.Windows.Forms.Panel();
             this.FEButton = new System.Windows.Forms.Button();
             this.ClearButton = new System.Windows.Forms.Button();
-            this.openButton = new System.Windows.Forms.Button();
+            this.OpenButton = new System.Windows.Forms.Button();
             this.panel9 = new System.Windows.Forms.Panel();
             this.DefaultWindowButton = new System.Windows.Forms.Button();
             this.panel10 = new System.Windows.Forms.Panel();
@@ -72,12 +78,6 @@
             this.panel12 = new System.Windows.Forms.Panel();
             this.FilterCheckBox = new System.Windows.Forms.CheckBox();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.FromSliceTrackBar = new System.Windows.Forms.TrackBar();
-            this.ToSliceTrackBar = new System.Windows.Forms.TrackBar();
-            this.FromSliceLabel = new System.Windows.Forms.Label();
-            this.ToSliceLabel = new System.Windows.Forms.Label();
-            this.FromSliceTextBox = new System.Windows.Forms.TextBox();
-            this.ToSliceTextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -88,20 +88,20 @@
             this.panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.MaxLevelTrackBar)).BeginInit();
             this.panel4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.FromSliceTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             this.panel5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DiameterTrackBar)).BeginInit();
             this.panel6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.SigmaColorTrackBar)).BeginInit();
             this.panel7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ToSliceTrackBar)).BeginInit();
             this.panel8.SuspendLayout();
             this.panel9.SuspendLayout();
             this.panel10.SuspendLayout();
             this.panel11.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.SigmaSpaceTrackBar)).BeginInit();
             this.panel12.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.FromSliceTrackBar)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ToSliceTrackBar)).BeginInit();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -209,7 +209,7 @@
             this.MinLevelTrackBar.Minimum = 1;
             this.MinLevelTrackBar.Name = "MinLevelTrackBar";
             this.MinLevelTrackBar.Size = new System.Drawing.Size(408, 55);
-            this.MinLevelTrackBar.TabIndex = 0;
+            this.MinLevelTrackBar.TabIndex = 1;
             this.MinLevelTrackBar.Value = 1;
             this.MinLevelTrackBar.Scroll += new System.EventHandler(this.MinLevelTrackBar_Scroll);
             // 
@@ -317,6 +317,35 @@
             this.panel4.Size = new System.Drawing.Size(409, 55);
             this.panel4.TabIndex = 8;
             // 
+            // FromSliceTextBox
+            // 
+            this.FromSliceTextBox.Enabled = false;
+            this.FromSliceTextBox.Location = new System.Drawing.Point(191, 32);
+            this.FromSliceTextBox.Name = "FromSliceTextBox";
+            this.FromSliceTextBox.ReadOnly = true;
+            this.FromSliceTextBox.Size = new System.Drawing.Size(37, 20);
+            this.FromSliceTextBox.TabIndex = 11;
+            // 
+            // FromSliceLabel
+            // 
+            this.FromSliceLabel.AutoSize = true;
+            this.FromSliceLabel.Location = new System.Drawing.Point(152, 33);
+            this.FromSliceLabel.Name = "FromSliceLabel";
+            this.FromSliceLabel.Size = new System.Drawing.Size(33, 13);
+            this.FromSliceLabel.TabIndex = 10;
+            this.FromSliceLabel.Text = "From:";
+            // 
+            // FromSliceTrackBar
+            // 
+            this.FromSliceTrackBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.FromSliceTrackBar.Enabled = false;
+            this.FromSliceTrackBar.Location = new System.Drawing.Point(0, 0);
+            this.FromSliceTrackBar.Minimum = 1;
+            this.FromSliceTrackBar.Name = "FromSliceTrackBar";
+            this.FromSliceTrackBar.Size = new System.Drawing.Size(409, 55);
+            this.FromSliceTrackBar.TabIndex = 5;
+            this.FromSliceTrackBar.Value = 1;
+            // 
             // pictureBox3
             // 
             this.pictureBox3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
@@ -423,11 +452,40 @@
             this.panel7.Size = new System.Drawing.Size(409, 55);
             this.panel7.TabIndex = 12;
             // 
+            // ToSliceTextBox
+            // 
+            this.ToSliceTextBox.Enabled = false;
+            this.ToSliceTextBox.Location = new System.Drawing.Point(191, 29);
+            this.ToSliceTextBox.Name = "ToSliceTextBox";
+            this.ToSliceTextBox.ReadOnly = true;
+            this.ToSliceTextBox.Size = new System.Drawing.Size(37, 20);
+            this.ToSliceTextBox.TabIndex = 12;
+            // 
+            // ToSliceLabel
+            // 
+            this.ToSliceLabel.AutoSize = true;
+            this.ToSliceLabel.Location = new System.Drawing.Point(152, 32);
+            this.ToSliceLabel.Name = "ToSliceLabel";
+            this.ToSliceLabel.Size = new System.Drawing.Size(23, 13);
+            this.ToSliceLabel.TabIndex = 11;
+            this.ToSliceLabel.Text = "To:";
+            // 
+            // ToSliceTrackBar
+            // 
+            this.ToSliceTrackBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ToSliceTrackBar.Enabled = false;
+            this.ToSliceTrackBar.Location = new System.Drawing.Point(0, 0);
+            this.ToSliceTrackBar.Minimum = 1;
+            this.ToSliceTrackBar.Name = "ToSliceTrackBar";
+            this.ToSliceTrackBar.Size = new System.Drawing.Size(409, 55);
+            this.ToSliceTrackBar.TabIndex = 5;
+            this.ToSliceTrackBar.Value = 1;
+            // 
             // panel8
             // 
             this.panel8.Controls.Add(this.FEButton);
             this.panel8.Controls.Add(this.ClearButton);
-            this.panel8.Controls.Add(this.openButton);
+            this.panel8.Controls.Add(this.OpenButton);
             this.panel8.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel8.Location = new System.Drawing.Point(3, 553);
             this.panel8.Name = "panel8";
@@ -458,15 +516,15 @@
             this.ClearButton.UseVisualStyleBackColor = true;
             this.ClearButton.Click += new System.EventHandler(this.ClearButton_Click);
             // 
-            // openButton
+            // OpenButton
             // 
-            this.openButton.Location = new System.Drawing.Point(9, 24);
-            this.openButton.Name = "openButton";
-            this.openButton.Size = new System.Drawing.Size(75, 23);
-            this.openButton.TabIndex = 0;
-            this.openButton.Text = "Open";
-            this.openButton.UseVisualStyleBackColor = true;
-            this.openButton.Click += new System.EventHandler(this.openButton_Click);
+            this.OpenButton.Location = new System.Drawing.Point(9, 24);
+            this.OpenButton.Name = "OpenButton";
+            this.OpenButton.Size = new System.Drawing.Size(75, 23);
+            this.OpenButton.TabIndex = 0;
+            this.OpenButton.Text = "Open";
+            this.OpenButton.UseVisualStyleBackColor = true;
+            this.OpenButton.Click += new System.EventHandler(this.OpenButton_Click);
             // 
             // panel9
             // 
@@ -579,64 +637,6 @@
             this.saveFileDialog1.DefaultExt = "txt";
             this.saveFileDialog1.Filter = "Текстовый документ|*.txt";
             // 
-            // FromSliceTrackBar
-            // 
-            this.FromSliceTrackBar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.FromSliceTrackBar.Enabled = false;
-            this.FromSliceTrackBar.Location = new System.Drawing.Point(0, 0);
-            this.FromSliceTrackBar.Minimum = 1;
-            this.FromSliceTrackBar.Name = "FromSliceTrackBar";
-            this.FromSliceTrackBar.Size = new System.Drawing.Size(409, 55);
-            this.FromSliceTrackBar.TabIndex = 5;
-            this.FromSliceTrackBar.Value = 1;
-            // 
-            // ToSliceTrackBar
-            // 
-            this.ToSliceTrackBar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ToSliceTrackBar.Enabled = false;
-            this.ToSliceTrackBar.Location = new System.Drawing.Point(0, 0);
-            this.ToSliceTrackBar.Minimum = 1;
-            this.ToSliceTrackBar.Name = "ToSliceTrackBar";
-            this.ToSliceTrackBar.Size = new System.Drawing.Size(409, 55);
-            this.ToSliceTrackBar.TabIndex = 5;
-            this.ToSliceTrackBar.Value = 1;
-            // 
-            // FromSliceLabel
-            // 
-            this.FromSliceLabel.AutoSize = true;
-            this.FromSliceLabel.Location = new System.Drawing.Point(152, 33);
-            this.FromSliceLabel.Name = "FromSliceLabel";
-            this.FromSliceLabel.Size = new System.Drawing.Size(33, 13);
-            this.FromSliceLabel.TabIndex = 10;
-            this.FromSliceLabel.Text = "From:";
-            // 
-            // ToSliceLabel
-            // 
-            this.ToSliceLabel.AutoSize = true;
-            this.ToSliceLabel.Location = new System.Drawing.Point(152, 32);
-            this.ToSliceLabel.Name = "ToSliceLabel";
-            this.ToSliceLabel.Size = new System.Drawing.Size(23, 13);
-            this.ToSliceLabel.TabIndex = 11;
-            this.ToSliceLabel.Text = "To:";
-            // 
-            // FromSliceTextBox
-            // 
-            this.FromSliceTextBox.Enabled = false;
-            this.FromSliceTextBox.Location = new System.Drawing.Point(191, 32);
-            this.FromSliceTextBox.Name = "FromSliceTextBox";
-            this.FromSliceTextBox.ReadOnly = true;
-            this.FromSliceTextBox.Size = new System.Drawing.Size(37, 20);
-            this.FromSliceTextBox.TabIndex = 11;
-            // 
-            // ToSliceTextBox
-            // 
-            this.ToSliceTextBox.Enabled = false;
-            this.ToSliceTextBox.Location = new System.Drawing.Point(191, 29);
-            this.ToSliceTextBox.Name = "ToSliceTextBox";
-            this.ToSliceTextBox.ReadOnly = true;
-            this.ToSliceTextBox.Size = new System.Drawing.Size(37, 20);
-            this.ToSliceTextBox.TabIndex = 12;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -661,6 +661,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.MaxLevelTrackBar)).EndInit();
             this.panel4.ResumeLayout(false);
             this.panel4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.FromSliceTrackBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
             this.panel5.ResumeLayout(false);
             this.panel5.PerformLayout();
@@ -670,6 +671,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.SigmaColorTrackBar)).EndInit();
             this.panel7.ResumeLayout(false);
             this.panel7.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ToSliceTrackBar)).EndInit();
             this.panel8.ResumeLayout(false);
             this.panel9.ResumeLayout(false);
             this.panel10.ResumeLayout(false);
@@ -678,8 +680,6 @@
             this.panel11.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.SigmaSpaceTrackBar)).EndInit();
             this.panel12.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.FromSliceTrackBar)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ToSliceTrackBar)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -687,7 +687,7 @@
         #endregion
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private System.Windows.Forms.Button openButton;
+        private System.Windows.Forms.Button OpenButton;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.TrackBar SliceTrackBar;
