@@ -161,6 +161,11 @@ namespace DicomViewer
             {
                 pictureBox2.Image = LoadWindowImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value);
             }
+            if (FilterCheckBox.Checked)
+            {
+                pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+            }
         }
 
         private void ClearButton_Click(object sender, EventArgs e)
@@ -223,6 +228,12 @@ namespace DicomViewer
                 pictureBox2.Image = LoadWindowImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value);
             }
             MinLevelTextBox.Text = Convert.ToString(MinLevelTrackBar.Value);
+
+            if (FilterCheckBox.Checked)
+            {
+                pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+            }
         }
         
 
@@ -264,26 +275,60 @@ namespace DicomViewer
                 //DicomWorkshop dcmWork = new DicomWorkshop(openFileDialog1.FileNames[SliceTrackBar.Value - 1]);
                 pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value - 1, MaxLevelTrackBar.Value - 1);
             }
+            else
+            {
+                pictureBox2.Image = LoadWindowImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value - 1, MaxLevelTrackBar.Value - 1);
+            }
         }
 
         private void MaxLevelTrackBar_Scroll(object sender, EventArgs e)
         {
+            if (SegmentateCheckBox.Checked == true)
+            {
+                pictureBox2.Image = LoadSegmentedImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value);
 
+            }
+            else
+            {
+                pictureBox2.Image = LoadWindowImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value);
+            }
+            MaxLevelTextBox.Text = Convert.ToString(MaxLevelTrackBar.Value);
+
+            if (FilterCheckBox.Checked)
+            {
+                pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+            }
         }
 
         private void DiameterTrackBar_Scroll(object sender, EventArgs e)
         {
-
+            if (FilterCheckBox.Checked)
+            {
+                pictureBox3.Image = pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+            }
+            DiameterTextBox.Text = DiameterTrackBar.Value.ToString();
         }
 
         private void SigmaColorTrackBar_Scroll(object sender, EventArgs e)
         {
-
+            if (FilterCheckBox.Checked)
+            {
+                pictureBox3.Image = pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+            }
+            SigmaColorTextBox.Text = SigmaColorTrackBar.Value.ToString();
         }
 
         private void SigmaSpaceTrackBar_Scroll(object sender, EventArgs e)
         {
-
+            if (FilterCheckBox.Checked)
+            {
+                pictureBox3.Image = pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+            }
+            SigmaSpaceTextBox.Text = SigmaSpaceTrackBar.Value.ToString();
         }
     }
 
