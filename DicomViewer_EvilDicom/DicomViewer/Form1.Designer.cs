@@ -345,13 +345,14 @@
             this.FromSliceTrackBar.Size = new System.Drawing.Size(409, 55);
             this.FromSliceTrackBar.TabIndex = 5;
             this.FromSliceTrackBar.Value = 1;
+            this.FromSliceTrackBar.Scroll += new System.EventHandler(this.FromSliceTrackBar_Scroll);
             // 
             // pictureBox3
             // 
             this.pictureBox3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.pictureBox3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox3.Location = new System.Drawing.Point(832, 2);
-            this.pictureBox3.Margin = new System.Windows.Forms.Padding(2);
+            this.pictureBox3.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.pictureBox3.Name = "pictureBox3";
             this.pictureBox3.Size = new System.Drawing.Size(411, 363);
             this.pictureBox3.TabIndex = 9;
@@ -364,7 +365,7 @@
             this.panel5.Controls.Add(this.DiameterTrackBar);
             this.panel5.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel5.Location = new System.Drawing.Point(832, 369);
-            this.panel5.Margin = new System.Windows.Forms.Padding(2);
+            this.panel5.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(411, 57);
             this.panel5.TabIndex = 10;
@@ -406,7 +407,7 @@
             this.panel6.Controls.Add(this.SigmaColorTrackBar);
             this.panel6.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel6.Location = new System.Drawing.Point(832, 430);
-            this.panel6.Margin = new System.Windows.Forms.Padding(2);
+            this.panel6.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.panel6.Name = "panel6";
             this.panel6.Size = new System.Drawing.Size(411, 57);
             this.panel6.TabIndex = 11;
@@ -480,6 +481,7 @@
             this.ToSliceTrackBar.Size = new System.Drawing.Size(409, 55);
             this.ToSliceTrackBar.TabIndex = 5;
             this.ToSliceTrackBar.Value = 1;
+            this.ToSliceTrackBar.Scroll += new System.EventHandler(this.ToSliceTrackBar_Scroll);
             // 
             // panel8
             // 

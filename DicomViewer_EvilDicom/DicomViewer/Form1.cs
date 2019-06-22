@@ -24,23 +24,34 @@ namespace DicomViewer
 
         }
 
-        public Image LoadFilteredImage(string fileName, int minDensity, int maxDensity,  int diameter, int sigmaColor, int sigmaSpace)
+        public Image LoadTresholdFilteredImage(string fileName, int minDensity, int maxDensity,  int diameter, int sigmaColor, int sigmaSpace)
         {
             DicomWorkshop dcmWork = new DicomWorkshop(fileName);
 
-            List<byte> segmPixelData = dcmWork.SegmentateBinary(minDensity, maxDensity);
+            List<byte> segmPixelData = dcmWork.ThresholdSegmentation(minDensity, maxDensity);
 
             List<byte> filteredPixels = dcmWork.BilateralFilter(segmPixelData, diameter, sigmaColor, sigmaSpace);
 
             return dcmWork.NoWindowRgbaFromPixelData(filteredPixels);
         }
 
-        public void GenerateFEFile(string[] readFileNames, string writeFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
+        public Image LoadWindowFilteredImage(string fileName, int minDensity, int maxDensity, int diameter, int sigmaColor, int sigmaSpace)
+        {
+            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
+
+            List<byte> segmPixelData = dcmWork.WindowSegmentation(minDensity, maxDensity);
+
+            List<byte> filteredPixels = dcmWork.BilateralFilter(segmPixelData, diameter, sigmaColor, sigmaSpace);
+
+            return dcmWork.NoWindowRgbaFromPixelData(filteredPixels);
+        }
+
+        public void GenerateFEFile(string[] readFileNames, string writeFileName, int minDensity, int maxDensity, int diameter, int sigmaColor, int sigmaSpace)
         {
             System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 
             FeModel Model = new FeModel(readFileNames.Count());
-            Model.ApdlCreateModel(readFileNames, writeFileName, density, diameter, sigmaColor, sigmaSpace);
+            Model.ApdlCreateModel(readFileNames, writeFileName, minDensity, maxDensity, diameter, sigmaColor, sigmaSpace);
 
             //SolidModel Model = new SolidModel(readFileNames.Count());
             //Model.ApdlCreateSolidModel(readFileNames, writeFileName, density, diameter, sigmaColor, sigmaSpace);
@@ -50,7 +61,7 @@ namespace DicomViewer
         {
             DicomWorkshop dcmWork = new DicomWorkshop(fileName);
 
-            return dcmWork.NoWindowRgbaFromPixelData(dcmWork.SegmentateBinary(minDensity,maxDensity));
+            return dcmWork.NoWindowRgbaFromPixelData(dcmWork.ThresholdSegmentation(minDensity,maxDensity));
         }
 
         public Image LoadImage(string fileName)
@@ -64,7 +75,7 @@ namespace DicomViewer
         {
             DicomWorkshop dcmWork = new DicomWorkshop(fileName);
 
-            return dcmWork.WindowRgbaFromPixelData(dcmWork.dcm.pixelData, minLevel, maxLevel);
+            return dcmWork.WindowRgbaFromPixelData(dcmWork.WindowSegmentation(minLevel, maxLevel),minLevel,maxLevel);
         }
 
 
@@ -163,8 +174,16 @@ namespace DicomViewer
             }
             if (FilterCheckBox.Checked)
             {
-                pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
                     DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
             }
         }
 
@@ -214,6 +233,19 @@ namespace DicomViewer
             }
             else
                 pictureBox2.Image = LoadWindowImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value);
+            if (FilterCheckBox.Checked)
+            {
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+            }
         }
 
         private void MinLevelTrackBar_Scroll(object sender, EventArgs e)
@@ -231,22 +263,41 @@ namespace DicomViewer
 
             if (FilterCheckBox.Checked)
             {
-                pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
                     DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
             }
         }
         
 
         private void FEButton_Click(object sender, EventArgs e)
         {
-            if (SegmentateCheckBox.Checked == true)
-            {
-                MinLevelTextBox.Text = Convert.ToString(MinLevelTrackBar.Value);
-                MinLevelTextBox.Enabled = true;
+            //if (SegmentateCheckBox.Checked == true)
+            //{
+                //MinLevelTextBox.Text = Convert.ToString(MinLevelTrackBar.Value);
+                //MinLevelTextBox.Enabled = true;
                 if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-                    //GenerateFEFile(openFileDialog1.FileNames[trackBar1.Value - 1], saveFileDialog1.FileName, trackBar2.Value);  
-                    GenerateFEFile(openFileDialog1.FileNames, saveFileDialog1.FileName, MinLevelTrackBar.Value, Int32.Parse(DiameterTextBox.Text), Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
-            }
+                {
+                    List<string> feFilenames = new List<string>();
+                    for (int i = 0; i < openFileDialog1.FileNames.Count(); i++)
+                    {
+
+                        if (i >= FromSliceTrackBar.Value && i <= ToSliceTrackBar.Value)
+                        {
+                            feFilenames.Add(openFileDialog1.FileNames[i]);
+                        }
+                    }
+                    GenerateFEFile(feFilenames.ToArray(), saveFileDialog1.FileName, MinLevelTrackBar.Value, MaxLevelTrackBar.Value, Int32.Parse(DiameterTextBox.Text), Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
+                }
+                    //GenerateFEFile(openFileDialog1.FileNames[trackBar1.Value - 1], saveFileDialog1.FileName, trackBar2.Value); 
+            //}
         }
         
 
@@ -254,8 +305,17 @@ namespace DicomViewer
         {
             if (FilterCheckBox.Checked)
             {
-                pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                if(SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
                     DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                
             }
             else
                 pictureBox3.Image = null;
@@ -279,6 +339,20 @@ namespace DicomViewer
             {
                 pictureBox2.Image = LoadWindowImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value - 1, MaxLevelTrackBar.Value - 1);
             }
+
+            if (FilterCheckBox.Checked)
+            {
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+            }
         }
 
         private void MaxLevelTrackBar_Scroll(object sender, EventArgs e)
@@ -296,8 +370,16 @@ namespace DicomViewer
 
             if (FilterCheckBox.Checked)
             {
-                pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
                     DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
             }
         }
 
@@ -305,8 +387,16 @@ namespace DicomViewer
         {
             if (FilterCheckBox.Checked)
             {
-                pictureBox3.Image = pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
                     DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
             }
             DiameterTextBox.Text = DiameterTrackBar.Value.ToString();
         }
@@ -315,8 +405,16 @@ namespace DicomViewer
         {
             if (FilterCheckBox.Checked)
             {
-                pictureBox3.Image = pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
                     DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
             }
             SigmaColorTextBox.Text = SigmaColorTrackBar.Value.ToString();
         }
@@ -325,10 +423,28 @@ namespace DicomViewer
         {
             if (FilterCheckBox.Checked)
             {
-                pictureBox3.Image = pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                if (SegmentateCheckBox.Checked)
+                {
+                    pictureBox3.Image = LoadTresholdFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
                     DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
+                else
+                {
+                    pictureBox3.Image = LoadWindowFilteredImage(openFileDialog1.FileNames[SliceTrackBar.Value - 1], MinLevelTrackBar.Value, MaxLevelTrackBar.Value,
+                    DiameterTrackBar.Value, SigmaColorTrackBar.Value, SigmaSpaceTrackBar.Value);
+                }
             }
             SigmaSpaceTextBox.Text = SigmaSpaceTrackBar.Value.ToString();
+        }
+
+        private void FromSliceTrackBar_Scroll(object sender, EventArgs e)
+        {
+            FromSliceTextBox.Text = FromSliceTrackBar.Value.ToString();
+        }
+
+        private void ToSliceTrackBar_Scroll(object sender, EventArgs e)
+        {
+            ToSliceTextBox.Text = ToSliceTrackBar.Value.ToString();
         }
     }
 
@@ -495,7 +611,7 @@ namespace DicomViewer
             }
         }
 
-        public void ApdlCreateModel(string[] srcFileNames, string dstFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
+        public void ApdlCreateModel(string[] srcFileNames, string dstFileName, int minDensity, int maxDensity, int diameter, int sigmaColor, int sigmaSpace)
         {
             using (StreamWriter sw = File.CreateText(dstFileName))
             {
@@ -505,7 +621,7 @@ namespace DicomViewer
 
                 for (int i = 0; i < layersCount; i++)
                 {
-                    layers[i].ApdlCreateLayer(sw,srcFileNames[i], density,diameter,sigmaColor,sigmaSpace);
+                    layers[i].ApdlCreateLayer(sw,srcFileNames[i], minDensity, maxDensity,diameter,sigmaColor,sigmaSpace);
                 }
 
                 ApdlMergeNodes(sw);
@@ -545,16 +661,24 @@ namespace DicomViewer
                 this.layerNumber = layerNumber;
             }
 
-            public void ApdlCreateLayer(StreamWriter sw,string srcFileName, int density, int diameter, int sigmaColor, int sigmaSpace)
+            public void ApdlCreateLayer(StreamWriter sw,string srcFileName, int minDensity, int maxDensity, int diameter, int sigmaColor, int sigmaSpace)
             {
-                DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
+                /*DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
 
                 List<byte> segmPixelData = dcmWork.Segmentate(density);
 
                 List<byte> filteredPixelData = dcmWork.BilateralFilter(segmPixelData, diameter, sigmaColor, sigmaSpace);
 
-                elements = dcmWork.FinateElementsFromPixelData(filteredPixelData, layerNumber);
-                
+                elements = dcmWork.FinateElementsFromPixelData(filteredPixelData, layerNumber);*/
+
+                DicomWorkshop dcmWork = new DicomWorkshop(srcFileName);
+
+                List<byte> segmPixelData = dcmWork.ThresholdSegmentation(minDensity,maxDensity);
+
+                List<byte> filteredPixelData = dcmWork.BilateralFilter(segmPixelData, diameter, sigmaColor, sigmaSpace);
+
+                elements = dcmWork.ThresholdFinateElementsFromPixelData(filteredPixelData, layerNumber);
+
                 int elementsId = layerNumber * dcmWork.dcm.rows * dcmWork.dcm.columns;
                 
                 for (int i = 0; i < elements.Count(); i++)
@@ -790,7 +914,7 @@ namespace DicomViewer
             return segmPixelData;
         }
 
-        public List<byte> SegmentateBinary(int minDensity, int maxDensity)
+        public List<byte> WindowSegmentation(int minDensity, int maxDensity)
         {
             int size = dcm.pixelData.Count;
             List<byte> segmPixelData = new List<byte>();//rgba
@@ -806,7 +930,42 @@ namespace DicomViewer
                 //This is  the window level algorithm
                 double half = dcm.window / 2.0;
 
-                if (valgray <= minDensity || valgray > maxDensity)
+                if (valgray < minDensity)
+                {
+                    segmPixelData.Insert(i, (byte)0);
+                    segmPixelData.Insert(i + 1, (byte)0);
+                }
+                else if(valgray >= maxDensity)
+                {
+                    segmPixelData.Insert(i, byte.MaxValue);
+                    segmPixelData.Insert(i + 1, (byte)(Math.Pow(2, dcm.bitsStored - 8) - 1));
+                }
+                else
+                {
+                    segmPixelData.Insert(i, (byte)dcm.pixelData[i]);
+                    segmPixelData.Insert(i + 1, (byte)dcm.pixelData[i + 1]);
+                }
+            }
+            return segmPixelData;
+        }
+
+        public List<byte> ThresholdSegmentation(int minDensity, int maxDensity)
+        {
+            int size = dcm.pixelData.Count;
+            List<byte> segmPixelData = new List<byte>();//rgba
+            double maxval = Math.Pow(2, dcm.bitsStored);
+
+            for (int i = 0; i < dcm.pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(dcm.pixelData[i]) + (short)(dcm.pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                valgray = dcm.slope * valgray + dcm.intercept;//modality lut
+
+                //This is  the window level algorithm
+                double half = dcm.window / 2.0;
+
+                if (valgray <= minDensity /*|| valgray > maxDensity*/)
                 {
                     segmPixelData.Insert(i, (byte)0);
                     segmPixelData.Insert(i + 1, (byte)0);
@@ -852,6 +1011,7 @@ namespace DicomViewer
             }
             return BmpFromRgba(outPixelData);
         }
+
 
         public Bitmap NoWindowRgbaFromPixelData(List<byte> pixelData)
         {
@@ -978,7 +1138,7 @@ namespace DicomViewer
             return elements;
         }
 
-        public List<FinateElement> FinateElementsModifiedFromPixelData(List<byte> pixelData, int sliceIndex, int minLevel, int maxLevel)
+        public List<FinateElement> WindowFinateElementsFromPixelData(List<byte> pixelData, int sliceIndex, int minLevel, int maxLevel)
         {
             List<FinateElement> elements = new List<FinateElement>();
             int elementsId = sliceIndex * dcm.rows * dcm.columns;
@@ -992,7 +1152,32 @@ namespace DicomViewer
 
                 double half = dcm.window / 2.0;
 
-                if (valgray <= minLevel || valgray > maxLevel)
+                if (valgray >= minLevel || valgray < maxLevel)
+                {
+                    elements.Add(new FinateElement(elementsId, sliceIndex, (i / 2) / dcm.rows, (i / 2) % dcm.rows, dcm.sliceThickness,
+                    dcm.rowSpacing, dcm.columnSpacing, valgray));
+
+                    elementsId++;
+                }
+            }
+            return elements;
+        }
+
+        public List<FinateElement> ThresholdFinateElementsFromPixelData(List<byte> pixelData, int sliceIndex)
+        {
+            List<FinateElement> elements = new List<FinateElement>();
+            int elementsId = sliceIndex * dcm.rows * dcm.columns;
+
+            for (int i = 0; i < pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                valgray = dcm.slope * valgray + dcm.intercept;
+
+                double half = dcm.window / 2.0;
+
+                if (valgray !=0)
                 {
                     elements.Add(new FinateElement(elementsId, sliceIndex, (i / 2) / dcm.rows, (i / 2) % dcm.rows, dcm.sliceThickness,
                     dcm.rowSpacing, dcm.columnSpacing, valgray));
