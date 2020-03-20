@@ -46,19 +46,21 @@ namespace DicomViewer
             //Model.ApdlCreateSolidModel(readFileNames, writeFileName, density, diameter, sigmaColor, sigmaSpace);
         }
 
-        public Image LoadSegmentedImage (string fileName, int density)
+        public Image LoadImage(string fileName)
+        {
+            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
+
+            return dcmWork.NoWindowRgbaFromPixelData(dcmWork.dcm.pixelData);
+        }
+
+        public Image LoadSegmentedImage(string fileName, int density)
         {
             DicomWorkshop dcmWork = new DicomWorkshop(fileName);
 
             return dcmWork.RgbaFromPixelData(dcmWork.Segmentate(density));
         }
 
-        public Image LoadImage(string fileName)
-        {
-            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
-
-            return dcmWork.RgbaFromPixelData(dcmWork.dcm.pixelData);
-        }
+        //private Loader loader = new Loader();
 
         
         private void openButton_Click(object sender, EventArgs e)
@@ -204,6 +206,23 @@ namespace DicomViewer
             pictureBox3.Image = LoadFilteredImage(openFileDialog1.FileNames[trackBar1.Value - 1],trackBar2.Value,Int32.Parse(DiameterTextBox.Text) , Int32.Parse(SigmaColorTextBox.Text), Int32.Parse(SigmaSpaceTextBox.Text));
         }
     }
+
+    /*public class Loader
+    {
+        public Image LoadImage(string fileName)
+        {
+            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
+
+            return dcmWork.NoWindowRgbaFromPixelData(dcmWork.dcm.pixelData);
+        }
+
+        public Image LoadSegmentedImage(string fileName, int density)
+        {
+            DicomWorkshop dcmWork = new DicomWorkshop(fileName);
+
+            return dcmWork.RgbaFromPixelData(dcmWork.Segmentate(density));
+        }
+    }*/
 
     public class SolidModel
     {
@@ -667,6 +686,39 @@ namespace DicomViewer
                     valgray = 255;
                 else
                     valgray = ((valgray - (dcm.level - half)) / dcm.window) * 255;
+
+                outPixelData[index] = (byte)valgray;
+                outPixelData[index + 1] = (byte)valgray;
+                outPixelData[index + 2] = (byte)valgray;
+                outPixelData[index + 3] = 255;
+
+                index += 4;
+            }
+            return BmpFromRgba(outPixelData);
+        }
+
+        public Bitmap NoWindowRgbaFromPixelData(List<byte> pixelData)
+        {
+            int index = 0;
+            byte[] outPixelData = new byte[dcm.rows * dcm.columns * 4];//rgba
+            double maxval = Math.Pow(2, dcm.bitsStored);
+
+            for (int i = 0; i < pixelData.Count; i += 2)
+            {
+                short gray = (short)((short)(pixelData[i]) + (short)(pixelData[i + 1] << 8));
+                double valgray = gray;
+
+                //valgray = dcm.slope * valgray + dcm.intercept;//modality lut
+
+                //This is  the window level algorithm
+                double half = dcm.window / 2.0;
+
+                //if (valgray <= dcm.level - half)
+                //valgray = 0;
+                //else if (valgray >= dcm.level + half)
+                //valgray = 255;
+                //else
+                valgray = (valgray / (maxval)) * 255;
 
                 outPixelData[index] = (byte)valgray;
                 outPixelData[index + 1] = (byte)valgray;
